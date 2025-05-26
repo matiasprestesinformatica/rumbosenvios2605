@@ -10,7 +10,6 @@ export async function addClienteAction(values: ClienteCreateValues): Promise<DbR
   const validation = clienteCreateSchema.safeParse(values);
 
   if (!validation.success) {
-    // console.error("Validation errors:", validation.error.flatten().fieldErrors);
     return { data: null, error: new Error(`Error de validación: ${JSON.stringify(validation.error.flatten().fieldErrors)}`) };
   }
 
@@ -113,4 +112,19 @@ export async function getClientesAction(
     return { data: null, error: new Error(error.message), count: null };
   }
   return { data, error: null, count };
+}
+
+export async function getClientesForSelectAction(): Promise<DbResultList<Pick<Cliente, 'id' | 'nombre_completo'>>> {
+  const supabase = createSupabaseServerClient();
+  const { data, error, count } = await supabase
+    .from('clientes')
+    .select('id, nombre_completo')
+    .eq('activo', true) // Only fetch active clients for selection
+    .order('nombre_completo', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching clientes for select:', error.message);
+    return { data: null, error: new Error(error.message), count: null };
+  }
+  return { data, error: null, count: count ?? data?.length ?? 0 };
 }

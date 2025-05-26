@@ -48,6 +48,7 @@ async function suggestDeliveryOptionsAction(input: SuggestDeliveryOptionsInput):
 export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, isEditMode = false }: EnvioFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [isGeocodingOrigin, setIsGeocodingOrigin] = useState(false);
   const [isGeocodingDest, setIsGeocodingDest] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -78,16 +79,27 @@ export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, 
       estatus: 'pendiente_confirmacion',
       ...(initialData && isEditMode ? {
         ...initialData,
-        // Ensure date fields are correctly formatted for datetime-local inputs if they exist
         fecha_solicitud: initialData.fecha_solicitud ? new Date(initialData.fecha_solicitud).toISOString().substring(0,16) : undefined,
         fecha_recoleccion_programada_inicio: initialData.fecha_recoleccion_programada_inicio ? new Date(initialData.fecha_recoleccion_programada_inicio).toISOString().substring(0,16) : null,
         fecha_recoleccion_programada_fin: initialData.fecha_recoleccion_programada_fin ? new Date(initialData.fecha_recoleccion_programada_fin).toISOString().substring(0,16) : null,
         fecha_entrega_estimada_inicio: initialData.fecha_entrega_estimada_inicio ? new Date(initialData.fecha_entrega_estimada_inicio).toISOString().substring(0,16) : null,
         fecha_entrega_estimada_fin: initialData.fecha_entrega_estimada_fin ? new Date(initialData.fecha_entrega_estimada_fin).toISOString().substring(0,16) : null,
+        peso_total_estimado_kg: initialData.peso_total_estimado_kg ?? null,
+        valor_declarado: initialData.valor_declarado ?? null,
+        monto_cobro_destino: initialData.monto_cobro_destino ?? null,
+        costo_envio: initialData.costo_envio ?? null,
+        costo_seguro: initialData.costo_seguro ?? null,
+        costo_adicional: initialData.costo_adicional ?? null,
       } : {
         fecha_solicitud: new Date().toISOString().substring(0,16),
+        peso_total_estimado_kg: null,
+        valor_declarado: null,
+        monto_cobro_destino: null,
+        costo_envio: null,
+        costo_seguro: null,
+        costo_adicional: null,
       }),
-    } as EnvioFormValues, // Cast to satisfy TS, defaultValues will spread correctly
+    } as EnvioFormValues,
   });
   
   useEffect(() => {
@@ -99,6 +111,12 @@ export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, 
         fecha_recoleccion_programada_fin: initialData.fecha_recoleccion_programada_fin ? new Date(initialData.fecha_recoleccion_programada_fin).toISOString().substring(0,16) : null,
         fecha_entrega_estimada_inicio: initialData.fecha_entrega_estimada_inicio ? new Date(initialData.fecha_entrega_estimada_inicio).toISOString().substring(0,16) : null,
         fecha_entrega_estimada_fin: initialData.fecha_entrega_estimada_fin ? new Date(initialData.fecha_entrega_estimada_fin).toISOString().substring(0,16) : null,
+        peso_total_estimado_kg: initialData.peso_total_estimado_kg ?? null,
+        valor_declarado: initialData.valor_declarado ?? null,
+        monto_cobro_destino: initialData.monto_cobro_destino ?? null,
+        costo_envio: initialData.costo_envio ?? null,
+        costo_seguro: initialData.costo_seguro ?? null,
+        costo_adicional: initialData.costo_adicional ?? null,
       };
       form.reset(transformedInitialData as EnvioFormValues);
     }
@@ -111,20 +129,26 @@ export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, 
     else console.warn("Google Maps API Key (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) no está configurada en variables de entorno.");
 
     const fetchData = async () => {
-      setIsLoading(true);
+      setIsDataLoading(true);
       try {
         const [clientesRes, paquetesRes, serviciosRes] = await Promise.all([
           getClientesForSelectAction(),
           getTiposPaqueteForSelectAction({ activo: true }),
           getTiposServicioForSelectAction({ activo: true }),
         ]);
-        if (clientesRes.data) setClientes(clientesRes.data); else toast({ title: "Error", description: clientesRes.error?.message || "No se pudieron cargar clientes.", variant: "destructive" });
-        if (paquetesRes.data) setTiposPaquete(paquetesRes.data); else toast({ title: "Error", description: paquetesRes.error?.message || "No se pudieron cargar tipos de paquete.", variant: "destructive" });
-        if (serviciosRes.data) setTiposServicio(serviciosRes.data); else toast({ title: "Error", description: serviciosRes.error?.message || "No se pudieron cargar tipos de servicio.", variant: "destructive" });
+        if (clientesRes.data) setClientes(clientesRes.data); 
+        else toast({ title: "Error", description: clientesRes.error?.message || "No se pudieron cargar clientes.", variant: "destructive" });
+        
+        if (paquetesRes.data) setTiposPaquete(paquetesRes.data); 
+        else toast({ title: "Error", description: paquetesRes.error?.message || "No se pudieron cargar tipos de paquete.", variant: "destructive" });
+        
+        if (serviciosRes.data) setTiposServicio(serviciosRes.data); 
+        else toast({ title: "Error", description: serviciosRes.error?.message || "No se pudieron cargar tipos de servicio.", variant: "destructive" });
+      
       } catch (error) {
-        toast({ title: "Error al cargar datos iniciales", description: (error as Error).message, variant: "destructive" });
+         toast({ title: "Error al cargar datos iniciales", description: (error as Error).message, variant: "destructive" });
       } finally {
-        setIsLoading(false);
+        setIsDataLoading(false);
       }
     };
     fetchData();
@@ -150,7 +174,6 @@ export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, 
           toast({ title: "Dirección Fuera de Zona", description: "La dirección geocodificada está fuera de Mar del Plata. Por favor, ingrese una dirección válida dentro de la ciudad.", variant: "warning" });
           form.setValue(latField, null as any); 
           form.setValue(lngField, null as any);
-          // No blanquear la dirección para que el usuario pueda corregirla
         } else {
           form.setValue(addressField, result.formattedAddress, { shouldValidate: true });
           form.setValue(latField, result.lat as any, { shouldValidate: true });
@@ -231,6 +254,15 @@ export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, 
     }
   };
 
+  if (isDataLoading && !isEditMode) { // Show loader only on initial load for new form or while initialData is loading for edit
+    return (
+      <div className="flex justify-center items-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Cargando datos del formulario...</p>
+      </div>
+    );
+  }
+
 
   return (
     <>
@@ -257,7 +289,7 @@ export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, 
                 <FormField control={form.control} name="descripcion_paquete" render={({ field }) => (<FormItem><FormLabel>Descripción del Paquete (Opcional)</FormLabel><FormControl><Textarea placeholder="Ej: Caja con documentos importantes" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="peso_total_estimado_kg" render={({ field }) => (<FormItem><FormLabel>Peso (kg, opc.)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ej: 1.5" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="cantidad_paquetes" render={({ field }) => (<FormItem><FormLabel>Cantidad</FormLabel><FormControl><Input type="number" step="1" placeholder="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="cantidad_paquetes" render={({ field }) => (<FormItem><FormLabel>Cantidad</FormLabel><FormControl><Input type="number" step="1" placeholder="1" {...field} value={field.value ?? 1} onChange={e => field.onChange(parseInt(e.target.value, 10))} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
               </CardContent>
             </Card>
@@ -298,8 +330,8 @@ export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, 
               />
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading || isGeocodingOrigin || isGeocodingDest}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" className="w-full" disabled={isLoading || isGeocodingOrigin || isGeocodingDest || isDataLoading}>
+            {(isLoading || isDataLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {submitButtonText || (isEditMode ? "Actualizar Envío" : "Crear Envío")}
           </Button>
         </form>
