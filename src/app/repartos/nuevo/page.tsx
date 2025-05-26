@@ -7,24 +7,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { addRepartoAction } from '@/lib/actions/repartos.actions';
-import type { Repartidor, Envio } from '@/types';
+import type { Repartidor, Envio, Cliente } from '@/types';
 import { getRepartidoresAction } from '@/lib/actions/repartidores.actions';
-import { getEnviosAction } from '@/lib/actions/envios.actions'; // To get pending shipments
+import { getEnviosPendientesForSelectAction } from '@/lib/actions/envios.actions';
+import { Loader2, Route } from 'lucide-react';
+
+interface EnvioParaSeleccion extends Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'empresa_origen_id'> {
+    cliente?: Pick<Cliente, 'nombre_completo'> | null;
+}
 
 export default function NuevoRepartoPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isDataLoading, setIsDataLoading] = React.useState(true);
   const [repartidores, setRepartidores] = React.useState<Pick<Repartidor, 'id' | 'nombre_completo'>[]>([]);
-  const [enviosPendientes, setEnviosPendientes] = React.useState<Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'cliente_id'>[]>([]); // Added cliente_id for potential grouping
+  const [enviosPendientes, setEnviosPendientes] = React.useState<EnvioParaSeleccion[]>([]);
 
   React.useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
+      setIsDataLoading(true);
       try {
         const [repartidoresRes, enviosRes] = await Promise.all([
-          getRepartidoresAction({ pageSize: 100, estatus: 'disponible' }), // Fetch more if needed
-          getEnviosAction({ estatus: 'pendiente_recoleccion', pageSize: 200 }) // Fetch more pending shipments
+          getRepartidoresAction({ pageSize: 100, estatus: 'disponible' }),
+          getEnviosPendientesForSelectAction({ pageSize: 200 })
         ]);
 
         if (repartidoresRes.data) {
@@ -34,14 +40,14 @@ export default function NuevoRepartoPage() {
         }
 
         if (enviosRes.data) {
-          setEnviosPendientes(enviosRes.data.map(e => ({ id: e.id, tracking_number: e.tracking_number, direccion_destino: e.direccion_destino, cliente_id: e.cliente_id })));
+          setEnviosPendientes(enviosRes.data as EnvioParaSeleccion[]);
         } else {
           toast({ title: "Error", description: enviosRes.error?.message || "No se pudieron cargar los envíos pendientes.", variant: "destructive" });
         }
       } catch (error) {
-         toast({ title: "Error al cargar datos", description: (error as Error).message, variant: "destructive" });
+         toast({ title: "Error al cargar datos iniciales", description: (error as Error).message, variant: "destructive" });
       } finally {
-        setIsLoading(false);
+        setIsDataLoading(false);
       }
     };
     fetchData();
@@ -59,15 +65,15 @@ export default function NuevoRepartoPage() {
         });
       } else {
         toast({
-          title: 'Reparto Creado',
-          description: `El reparto para ${values.fecha_reparto} ha sido creado exitosamente.`,
+          title: 'Reparto Creado Exitosamente',
+          description: `El reparto "${result.data?.nombre_reparto || result.data?.id}" ha sido creado.`,
           variant: 'success',
         });
         router.push('/repartos');
       }
     } catch (error) {
         toast({
-          title: 'Error inesperado',
+          title: 'Error Inesperado',
           description: (error as Error).message || "Ocurrió un problema al crear el reparto.",
           variant: 'destructive',
         });
@@ -76,17 +82,25 @@ export default function NuevoRepartoPage() {
     }
   };
 
-  if (isLoading && repartidores.length === 0 && enviosPendientes.length === 0) {
-    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /> <p className="ml-2">Cargando datos...</p></div>;
+  if (isDataLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Cargando datos para nuevo reparto...</p>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-6">
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Crear Nuevo Reparto</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Route className="h-6 w-6 text-primary" />
+            Planificar Nuevo Reparto
+          </CardTitle>
           <CardDescription>
-            Planifica una nueva ruta de entrega asignando envíos a un repartidor.
+            Asigna envíos pendientes a un repartidor para una fecha específica.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -95,6 +109,7 @@ export default function NuevoRepartoPage() {
             repartidores={repartidores}
             enviosPendientes={enviosPendientes}
             isSubmitting={isLoading}
+            submitButtonText="Crear Reparto y Asignar Envíos"
           />
         </CardContent>
       </Card>

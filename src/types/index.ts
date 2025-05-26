@@ -1,5 +1,4 @@
 
-
 import type { LucideIcon } from 'lucide-react';
 
 export type NavItem = {
@@ -153,8 +152,6 @@ export interface Envio {
   referencia_destino?: string | null;
   latitud_destino?: number | null; // NUMERIC(10,7)
   longitud_destino?: number | null; // NUMERIC(10,7)
-  contacto_destino_nombre: string;
-  contacto_destino_telefono: string;
   tipo_paquete_id?: string | null; // UUID, FK to tipos_paquete
   tipo_servicio_id: string; // UUID, FK to tipos_servicio
   descripcion_paquete?: string | null;
@@ -186,13 +183,18 @@ export interface Envio {
   timeWindowEnd?: string;
   packageType?: string; // Simplified type from form
   urgency?: 'high' | 'medium' | 'low'; // Simplified urgency
+  cliente?: Pick<Cliente, 'id' | 'nombre_completo' | 'email'>; // For joins
+  empresa_origen?: Pick<Empresa, 'id' | 'nombre'>; // For joins
+  tipo_paquete?: Pick<TipoPaquete, 'id' | 'nombre'>; // For joins
+  tipo_servicio?: Pick<TipoServicio, 'id' | 'nombre'>; // For joins
+  repartidor_asignado?: Pick<Repartidor, 'id' | 'nombre_completo'>; // For joins
 }
 
 export interface Reparto {
   id: string; // UUID
   nombre_reparto?: string | null;
   repartidor_id: string; // UUID, FK to repartidores
-  fecha_reparto: string; // DATE
+  fecha_reparto: string; // DATE string (YYYY-MM-DD)
   estatus: EstadoEnvioEnum; // Or a specific reparto_status_enum
   hora_inicio_estimada?: string | null; // TIME
   hora_fin_estimada?: string | null; // TIME
@@ -201,6 +203,8 @@ export interface Reparto {
   notas?: string | null;
   created_at: string; // TIMESTAMPTZ
   updated_at: string; // TIMESTAMPTZ
+  repartidor?: Pick<Repartidor, 'id' | 'nombre_completo'>; // For joins
+  paradas_reparto?: ParadaReparto[]; // For joins
 }
 
 export interface ParadaReparto {
@@ -216,7 +220,7 @@ export interface ParadaReparto {
   nombre_contacto_parada?: string | null;
   telefono_contacto_parada?: string | null;
   notas_parada?: string | null;
-  hora_estimada_llegada?: string | null; // TIME
+  hora_estimada_llegada?: string | null; // TIME string HH:MM
   hora_real_llegada?: string | null; // TIMESTAMPTZ
   hora_real_salida?: string | null; // TIMESTAMPTZ
   estatus_parada: EstadoEnvioEnum; // Or a specific parada_status_enum
@@ -224,7 +228,9 @@ export interface ParadaReparto {
   firma_receptor_url?: string | null;
   created_at: string; // TIMESTAMPTZ
   updated_at: string; // TIMESTAMPTZ
+  envio?: Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'cliente_id' | 'estatus'> & { cliente?: Pick<Cliente, 'nombre_completo'> }; // For joins
 }
+
 
 export interface TarifaDistanciaCalculadora {
   id: string; // UUID
@@ -240,6 +246,7 @@ export interface TarifaDistanciaCalculadora {
   activo: boolean;
   created_at: string; // TIMESTAMPTZ
   updated_at: string; // TIMESTAMPTZ
+  tipo_servicio?: Pick<TipoServicio, 'id' | 'nombre'>; // For joins
 }
 
 // Generic type for CRUD operations
@@ -256,12 +263,12 @@ export interface PricedItem {
 
 
 // From orders/page.tsx - needs to be compatible with Envios
-export type Order = Pick<Envio, 
-  'id' | 
-  'cliente_id' | 
-  'direccion_destino' | 
-  'estatus' | 
-  'repartidor_asignado_id' | 
+export type Order = Pick<Envio,
+  'id' |
+  'cliente_id' |
+  'direccion_destino' |
+  'estatus' |
+  'repartidor_asignado_id' |
   'fecha_entrega_estimada_fin' | // Using this for 'deadline'
   'tipo_paquete_id' | // Used for packageType indirectly
   'urgency' // This is a UI concept, not directly in DB as 'urgency'
@@ -305,4 +312,3 @@ export type AISuggestions = {
   suggestions: DeliveryOptionSuggestion[];
   disclaimer?: string;
 };
-

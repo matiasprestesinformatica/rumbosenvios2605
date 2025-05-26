@@ -103,10 +103,10 @@ export async function getEnvioByIdAction(id: string): Promise<DbResult<Envio>> {
 }
 
 export async function getEnviosAction(
-  { page = 1, pageSize = 10, searchTerm, estatus, clienteId, repartidorId, fechaInicio, fechaFin }: 
-  { 
-    page?: number; 
-    pageSize?: number; 
+  { page = 1, pageSize = 10, searchTerm, estatus, clienteId, repartidorId, fechaInicio, fechaFin }:
+  {
+    page?: number;
+    pageSize?: number;
     searchTerm?: string;
     estatus?: Envio['estatus'];
     clienteId?: string;
@@ -121,7 +121,8 @@ export async function getEnviosAction(
     .select(`
       *,
       cliente:clientes ( id, nombre_completo ),
-      repartidor_asignado:repartidores ( id, nombre_completo )
+      repartidor_asignado:repartidores ( id, nombre_completo ),
+      tipo_servicio:tipos_servicio (id, nombre)
     `, { count: 'exact' });
 
   if (searchTerm) {
@@ -163,4 +164,32 @@ export async function getEnviosAction(
     return { data: null, error: new Error(error.message), count: null };
   }
   return { data, error: null, count };
+}
+
+
+export async function getEnviosPendientesForSelectAction(
+  { pageSize = 200, empresaOrigenId }: { pageSize?: number, empresaOrigenId?: string } = {}
+): Promise<DbResultList<Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'cliente_id' | 'empresa_origen_id'> & { cliente?: Pick<Cliente, 'nombre_completo'> }>> {
+  const supabase = createSupabaseServerClient();
+  let query = supabase
+    .from('envios')
+    .select('id, tracking_number, direccion_destino, cliente_id, empresa_origen_id, cliente:clientes(nombre_completo)')
+    .in('estatus', ['pendiente_recoleccion', 'pendiente_confirmacion']) // Consider which statuses are truly "pending" for a reparto
+    .limit(pageSize)
+    .order('created_at', { ascending: true });
+
+  if (empresaOrigenId) {
+    query = query.eq('empresa_origen_id', empresaOrigenId);
+  } else {
+    // If no empresa_origen_id is specified, we might want to exclude those that DO have one,
+    // or handle this based on business logic. For now, fetch all pending.
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching envios pendientes:', error.message);
+    return { data: null, error: new Error(error.message) };
+  }
+  return { data, error: null, count: data?.length };
 }

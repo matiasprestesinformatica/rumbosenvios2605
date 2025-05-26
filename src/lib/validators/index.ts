@@ -47,7 +47,6 @@ export const tipoVehiculoEnumSchema = z.enum([
   'utilitario_grande',
 ]);
 
-
 // Validators for Empresa
 const baseEmpresaSchemaObject = z.object({
   nombre: z.string().min(2, "El nombre es requerido."),
@@ -146,7 +145,7 @@ const baseTipoServicioSchemaObject = z.object({
   disponible_feriados: z.boolean().default(false),
   activo: z.boolean().default(true),
 });
-// For create, apply refine after defining the base
+
 export const tipoServicioCreateSchema = baseTipoServicioSchemaObject.refine(data => {
   if (data.tiempo_entrega_estimado_horas_min && data.tiempo_entrega_estimado_horas_max) {
       return data.tiempo_entrega_estimado_horas_min <= data.tiempo_entrega_estimado_horas_max;
@@ -155,7 +154,6 @@ export const tipoServicioCreateSchema = baseTipoServicioSchemaObject.refine(data
 }, { message: "El tiempo mínimo no puede ser mayor al máximo.", path: ["tiempo_entrega_estimado_horas_min"] });
 export type TipoServicioCreateValues = z.infer<typeof tipoServicioCreateSchema>;
 
-// For update, apply partial to the base, then optionally re-apply refine if needed for partial updates
 export const tipoServicioUpdateSchema = baseTipoServicioSchemaObject.partial().refine(data => {
   if (data.tiempo_entrega_estimado_horas_min !== undefined && data.tiempo_entrega_estimado_horas_max !== undefined && data.tiempo_entrega_estimado_horas_min !== null && data.tiempo_entrega_estimado_horas_max !== null) {
       return data.tiempo_entrega_estimado_horas_min <= data.tiempo_entrega_estimado_horas_max;
@@ -189,7 +187,7 @@ const baseEnvioSchemaObject = z.object({
   valor_declarado: z.coerce.number().nonnegative("Valor debe ser no negativo.").default(0).optional().nullable(),
   requiere_cobro_destino: z.boolean().default(false),
   monto_cobro_destino: z.coerce.number().nonnegative("Monto debe ser no negativo.").optional().nullable(),
-  fecha_solicitud: z.string().datetime().optional(),
+  fecha_solicitud: z.string().datetime({ message: "Fecha de solicitud inválida." }).optional(),
   fecha_recoleccion_programada_inicio: z.string().datetime({ message: "Fecha y hora de recolección inválida." }).optional().nullable(),
   fecha_recoleccion_programada_fin: z.string().datetime({ message: "Fecha y hora de recolección inválida." }).optional().nullable(),
   fecha_entrega_estimada_inicio: z.string().datetime({ message: "Fecha y hora de entrega inválida." }).optional().nullable(),
@@ -203,7 +201,6 @@ const baseEnvioSchemaObject = z.object({
   notas_internas: z.string().optional().nullable(),
 });
 
-// For create, apply refine after defining the base
 export const envioCreateSchema = baseEnvioSchemaObject.refine(data => {
     if (data.requiere_cobro_destino && (data.monto_cobro_destino === null || data.monto_cobro_destino === undefined || data.monto_cobro_destino < 0)) {
         return false;
@@ -212,7 +209,6 @@ export const envioCreateSchema = baseEnvioSchemaObject.refine(data => {
 }, { message: "Monto de cobro a destino es requerido si se activa la opción.", path: ["monto_cobro_destino"] });
 export type EnvioCreateValues = z.infer<typeof envioCreateSchema>;
 
-// For update, apply partial to the base, then optionally re-apply refine if needed for partial updates
 export const envioUpdateSchema = baseEnvioSchemaObject.partial().refine(data => {
     if (data.requiere_cobro_destino !== undefined && data.requiere_cobro_destino && (data.monto_cobro_destino === null || data.monto_cobro_destino === undefined || data.monto_cobro_destino < 0)) {
         return false;
@@ -226,7 +222,7 @@ export type EnvioUpdateValues = z.infer<typeof envioUpdateSchema>;
 const baseRepartoSchemaObject = z.object({
   nombre_reparto: z.string().min(3, "Nombre del reparto debe tener al menos 3 caracteres.").optional().nullable(),
   repartidor_id: z.string().uuid("ID de repartidor inválido."),
-  fecha_reparto: z.string().refine(val => !isNaN(Date.parse(val)), { message: "Fecha inválida" }),
+  fecha_reparto: z.string().refine(val => !isNaN(Date.parse(val)), { message: "Fecha inválida" }), // Stores as YYYY-MM-DD string
   estatus: estadoEnvioEnumSchema.default('pendiente_recoleccion'), // Estatus inicial del reparto
   hora_inicio_estimada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
   hora_fin_estimada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
@@ -256,7 +252,7 @@ const baseParadaRepartoSchemaObject = z.object({
   telefono_contacto_parada: z.string().optional().nullable(),
   notas_parada: z.string().optional().nullable(),
   hora_estimada_llegada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
-  estatus_parada: estadoEnvioEnumSchema.default('pendiente_recoleccion'),
+  estatus_parada: estadoEnvioEnumSchema.default('pendiente_recoleccion'), // Initial status for a stop
 });
 export const paradaRepartoCreateSchema = baseParadaRepartoSchemaObject;
 export type ParadaRepartoCreateValues = z.infer<typeof paradaRepartoCreateSchema>;
@@ -279,17 +275,18 @@ const baseTarifaDistanciaCalculadoraSchemaObject = z.object({
   activo: z.boolean().default(true),
 });
 
-// For create, apply refine after defining the base
 export const tarifaDistanciaCalculadoraCreateSchema = baseTarifaDistanciaCalculadoraSchemaObject.refine(data => data.distancia_min_km < data.distancia_max_km, {
   message: "Distancia mínima debe ser menor a la máxima.",
   path: ["distancia_min_km"],
 });
 export type TarifaDistanciaCalculadoraCreateValues = z.infer<typeof tarifaDistanciaCalculadoraCreateSchema>;
 
-// For update, apply partial to the base, then optionally re-apply refine if needed for partial updates
 export const tarifaDistanciaCalculadoraUpdateSchema = baseTarifaDistanciaCalculadoraSchemaObject.partial().refine(data => {
   if (data.distancia_min_km !== undefined && data.distancia_max_km !== undefined) {
-    return data.distancia_min_km < data.distancia_max_km;
+    // Ensure they are not null before comparison if they are optional fields
+    if (data.distancia_min_km !== null && data.distancia_max_km !== null) {
+        return data.distancia_min_km < data.distancia_max_km;
+    }
   }
   return true;
 }, { message: "Distancia mínima debe ser menor a la máxima.", path: ["distancia_min_km"] });
