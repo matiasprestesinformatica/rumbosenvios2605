@@ -48,7 +48,7 @@ export function RepartoForm({
     resolver: zodResolver(repartoCreateSchema),
     defaultValues: initialData || {
       nombre_reparto: `Reparto ${new Date().toLocaleDateString('es-AR')}`,
-      repartidor_id: undefined, // Changed from '' to undefined
+      repartidor_id: "", // Changed from undefined to empty string
       fecha_reparto: new Date().toISOString().split('T')[0],
       estatus: 'pendiente_recoleccion',
       envios_ids: [],
@@ -112,7 +112,7 @@ export function RepartoForm({
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    value={field.value} // Use field.value directly (will be undefined initially)
+                    value={field.value} // Ensure this is field.value (which will be "" initially)
                   >
                     <FormControl>
                       <SelectTrigger>
