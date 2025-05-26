@@ -3,7 +3,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { Empresa, DbResult, DbResultList } from '@/types';
 import { empresaCreateSchema, empresaUpdateSchema, type EmpresaCreateValues, type EmpresaUpdateValues } from '@/lib/validators';
-import { z } from 'zod';
+import { isWithinMarDelPlata } from '@/lib/maps-utils'; // Import the validator
 
 export async function addEmpresaAction(values: EmpresaCreateValues): Promise<DbResult<Empresa>> {
   const supabase = createSupabaseServerClient();
@@ -11,6 +11,14 @@ export async function addEmpresaAction(values: EmpresaCreateValues): Promise<DbR
 
   if (!validation.success) {
     return { data: null, error: new Error(`Error de validación: ${JSON.stringify(validation.error.flatten().fieldErrors)}`) };
+  }
+
+  const { latitud, longitud } = validation.data;
+
+  if (latitud != null && longitud != null) {
+    if (!isWithinMarDelPlata(latitud, longitud)) {
+      return { data: null, error: new Error("La dirección fiscal geocodificada está fuera del área de Mar del Plata.") };
+    }
   }
 
   const { data, error } = await supabase
@@ -33,6 +41,13 @@ export async function updateEmpresaAction(id: string, values: EmpresaUpdateValue
   const validation = empresaUpdateSchema.safeParse(values);
   if (!validation.success) {
     return { data: null, error: new Error(`Error de validación: ${JSON.stringify(validation.error.flatten().fieldErrors)}`) };
+  }
+
+  const { latitud, longitud } = validation.data;
+  if (latitud != null && longitud != null) {
+    if (!isWithinMarDelPlata(latitud, longitud)) {
+      return { data: null, error: new Error("La dirección fiscal geocodificada está fuera del área de Mar del Plata.") };
+    }
   }
 
   const { data, error } = await supabase
@@ -82,7 +97,7 @@ export async function getEmpresasAction(
   const query = supabase.from('empresas').select('*', { count: 'exact' });
 
   if (searchTerm) {
-    query.or(`nombre.ilike.%${searchTerm}%,rfc.ilike.%${searchTerm}%,email_contacto.ilike.%${searchTerm}%`);
+    query.or(`nombre.ilike.%${searchTerm}%,rfc.ilike.%${searchTerm}%,email_contacto.ilike.%${searchTerm}%,direccion_fiscal.ilike.%${searchTerm}%`);
   }
 
   const start = (page - 1) * pageSize;

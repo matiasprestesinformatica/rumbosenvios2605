@@ -24,7 +24,7 @@ Este es un proyecto Next.js para Rumbos Envios, una plataforma de gestión de en
     ```
 
 2.  **Configurar Variables de Entorno:**
-    Crea un archivo `.env.local` en la raíz del proyecto y añade tus variables de entorno. Como mínimo, necesitarás configurar las de Supabase y Google AI (para Genkit).
+    Crea un archivo `.env.local` en la raíz del proyecto y añade tus variables de entorno. Como mínimo, necesitarás configurar las de Supabase, Google AI (para Genkit) y Google Maps (para Geocodificación).
 
     Ejemplo de `.env.local`:
     ```env
@@ -36,6 +36,9 @@ Este es un proyecto Next.js para Rumbos Envios, una plataforma de gestión de en
 
     # Google AI (para Genkit)
     GOOGLE_API_KEY=tu_api_key_de_google_ai_aqui
+    
+    # Google Maps (para Geocoding API)
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=tu_api_key_de_google_maps_aqui
     ```
 
 3.  **Ejecutar el servidor de desarrollo:**
@@ -76,6 +79,7 @@ Este es un proyecto Next.js para Rumbos Envios, una plataforma de gestión de en
     -   `supabase/`: Configuración del cliente de Supabase.
     -   `validators/`: Esquemas de validación Zod.
     -   `utils.ts`: Funciones de utilidad general.
+    -   `maps-utils.ts`: Utilidades para mapas y geocodificación.
 -   `src/types/`: Definiciones de TypeScript (incluyendo tipos de base de datos).
 -   `src/ai/`: Lógica relacionada con Genkit.
     -   `genkit.ts`: Configuración e inicialización de Genkit.

@@ -49,11 +49,13 @@ export const tipoVehiculoEnumSchema = z.enum([
 
 
 // Validators for Empresa
-const baseEmpresaSchema = z.object({
+const baseEmpresaSchemaObject = z.object({
   nombre: z.string().min(2, "El nombre es requerido."),
   razon_social: z.string().optional().nullable(),
   rfc: z.string().max(13).optional().nullable(),
   direccion_fiscal: z.string().optional().nullable(),
+  latitud: z.number().optional().nullable(),
+  longitud: z.number().optional().nullable(),
   telefono_contacto: z.string().optional().nullable(),
   email_contacto: z.string().email("Email inválido.").optional().nullable(),
   nombre_responsable: z.string().optional().nullable(),
@@ -62,33 +64,35 @@ const baseEmpresaSchema = z.object({
   activa: z.boolean().default(true),
   notas: z.string().optional().nullable(),
 });
-export const empresaCreateSchema = baseEmpresaSchema;
+export const empresaCreateSchema = baseEmpresaSchemaObject;
 export type EmpresaCreateValues = z.infer<typeof empresaCreateSchema>;
 
-export const empresaUpdateSchema = baseEmpresaSchema.partial();
+export const empresaUpdateSchema = baseEmpresaSchemaObject.partial();
 export type EmpresaUpdateValues = z.infer<typeof empresaUpdateSchema>;
 
 
 // Validators for Cliente
-const baseClienteSchema = z.object({
+const baseClienteSchemaObject = z.object({
   nombre_completo: z.string().min(2, "El nombre completo es requerido."),
   email: z.string().email("Email inválido.").optional().nullable(),
   telefono: z.string().optional().nullable(),
   direccion_predeterminada: z.string().optional().nullable(),
+  latitud_predeterminada: z.number().optional().nullable(),
+  longitud_predeterminada: z.number().optional().nullable(),
   empresa_id: z.string().uuid("ID de empresa inválido.").optional().nullable(),
   fecha_nacimiento: z.string().optional().nullable().refine(val => val ? !isNaN(Date.parse(val)) : true, { message: "Fecha inválida" }),
   notas_internas: z.string().optional().nullable(),
   activo: z.boolean().default(true),
 });
-export const clienteCreateSchema = baseClienteSchema;
+export const clienteCreateSchema = baseClienteSchemaObject;
 export type ClienteCreateValues = z.infer<typeof clienteCreateSchema>;
 
-export const clienteUpdateSchema = baseClienteSchema.partial();
+export const clienteUpdateSchema = baseClienteSchemaObject.partial();
 export type ClienteUpdateValues = z.infer<typeof clienteUpdateSchema>;
 
 
 // Validators for Repartidor
-const baseRepartidorSchema = z.object({
+const baseRepartidorSchemaObject = z.object({
   user_id: z.string().uuid("ID de usuario inválido.").optional().nullable(),
   nombre_completo: z.string().min(2, "El nombre completo es requerido."),
   telefono: z.string().min(8, "Teléfono inválido."),
@@ -106,15 +110,15 @@ const baseRepartidorSchema = z.object({
   foto_perfil_url: z.string().url("URL inválida.").optional().nullable(),
   activo: z.boolean().default(true),
 });
-export const repartidorCreateSchema = baseRepartidorSchema;
+export const repartidorCreateSchema = baseRepartidorSchemaObject;
 export type RepartidorCreateValues = z.infer<typeof repartidorCreateSchema>;
 
-export const repartidorUpdateSchema = baseRepartidorSchema.partial();
+export const repartidorUpdateSchema = baseRepartidorSchemaObject.partial();
 export type RepartidorUpdateValues = z.infer<typeof repartidorUpdateSchema>;
 
 
 // Validators for TipoPaquete
-const baseTipoPaqueteSchema = z.object({
+const baseTipoPaqueteSchemaObject = z.object({
   nombre: z.string().min(2, "El nombre es requerido."),
   descripcion: z.string().optional().nullable(),
   peso_max_kg: z.number().positive("El peso debe ser positivo.").optional().nullable(),
@@ -125,15 +129,15 @@ const baseTipoPaqueteSchema = z.object({
   es_fragil: z.boolean().default(false),
   activo: z.boolean().default(true),
 });
-export const tipoPaqueteCreateSchema = baseTipoPaqueteSchema;
+export const tipoPaqueteCreateSchema = baseTipoPaqueteSchemaObject;
 export type TipoPaqueteCreateValues = z.infer<typeof tipoPaqueteCreateSchema>;
 
-export const tipoPaqueteUpdateSchema = baseTipoPaqueteSchema.partial();
+export const tipoPaqueteUpdateSchema = baseTipoPaqueteSchemaObject.partial();
 export type TipoPaqueteUpdateValues = z.infer<typeof tipoPaqueteUpdateSchema>;
 
 
 // Validators for TipoServicio
-const baseTipoServicioSchema = z.object({
+const baseTipoServicioSchemaObject = z.object({
   nombre: z.string().min(2, "El nombre es requerido."),
   descripcion: z.string().optional().nullable(),
   tiempo_entrega_estimado_horas_min: z.number().int().positive().optional().nullable(),
@@ -143,7 +147,7 @@ const baseTipoServicioSchema = z.object({
   activo: z.boolean().default(true),
 });
 
-export const tipoServicioCreateSchema = baseTipoServicioSchema.refine(data => {
+export const tipoServicioCreateSchema = baseTipoServicioSchemaObject.refine(data => {
     if (data.tiempo_entrega_estimado_horas_min && data.tiempo_entrega_estimado_horas_max) {
         return data.tiempo_entrega_estimado_horas_min <= data.tiempo_entrega_estimado_horas_max;
     }
@@ -151,19 +155,12 @@ export const tipoServicioCreateSchema = baseTipoServicioSchema.refine(data => {
 }, { message: "El tiempo mínimo no puede ser mayor al máximo.", path: ["tiempo_entrega_estimado_horas_min"] });
 export type TipoServicioCreateValues = z.infer<typeof tipoServicioCreateSchema>;
 
-export const tipoServicioUpdateSchema = baseTipoServicioSchema.partial();
-// If the refinement is also needed for updates and can handle partial data:
-// export const tipoServicioUpdateSchema = baseTipoServicioSchema.partial().refine(data => {
-//   if (data.tiempo_entrega_estimado_horas_min && data.tiempo_entrega_estimado_horas_max) {
-//       return data.tiempo_entrega_estimado_horas_min <= data.tiempo_entrega_estimado_horas_max;
-//   }
-//   return true;
-// }, { message: "El tiempo mínimo no puede ser mayor al máximo.", path: ["tiempo_entrega_estimado_horas_min"] });
+export const tipoServicioUpdateSchema = baseTipoServicioSchemaObject.partial();
 export type TipoServicioUpdateValues = z.infer<typeof tipoServicioUpdateSchema>;
 
 
 // Validators for Envio
-const baseEnvioSchema = z.object({
+const baseEnvioSchemaObject = z.object({
   cliente_id: z.string().uuid("ID de cliente inválido."),
   empresa_origen_id: z.string().uuid("ID de empresa inválido.").optional().nullable(),
   direccion_origen: z.string().min(5, "Dirección de origen requerida."),
@@ -176,8 +173,6 @@ const baseEnvioSchema = z.object({
   referencia_destino: z.string().optional().nullable(),
   latitud_destino: z.number().optional().nullable(),
   longitud_destino: z.number().optional().nullable(),
-  contacto_destino_nombre: z.string().min(2, "Nombre de contacto destino requerido."),
-  contacto_destino_telefono: z.string().min(8, "Teléfono de contacto destino requerido."),
   tipo_paquete_id: z.string().uuid("ID de tipo de paquete inválido.").optional().nullable(),
   tipo_servicio_id: z.string().uuid("ID de tipo de servicio inválido."),
   descripcion_paquete: z.string().optional().nullable(),
@@ -188,21 +183,21 @@ const baseEnvioSchema = z.object({
   valor_declarado: z.number().nonnegative().default(0).optional().nullable(),
   requiere_cobro_destino: z.boolean().default(false),
   monto_cobro_destino: z.number().nonnegative().optional().nullable(),
-  fecha_solicitud: z.string().datetime().optional(), // Handled by default in DB
+  fecha_solicitud: z.string().datetime().optional(),
   fecha_recoleccion_programada_inicio: z.string().datetime().optional().nullable(),
   fecha_recoleccion_programada_fin: z.string().datetime().optional().nullable(),
   fecha_entrega_estimada_inicio: z.string().datetime().optional().nullable(),
   fecha_entrega_estimada_fin: z.string().datetime().optional().nullable(),
   estatus: estadoEnvioEnumSchema.default('pendiente_confirmacion'),
   repartidor_asignado_id: z.string().uuid().optional().nullable(),
-  tracking_number: z.string().min(5, "Tracking number inválido."), // Usually auto-generated
+  tracking_number: z.string().min(5, "Tracking number inválido."),
   costo_envio: z.number().nonnegative().optional().nullable(),
   costo_seguro: z.number().nonnegative().optional().nullable(),
   costo_adicional: z.number().nonnegative().optional().nullable(),
   notas_internas: z.string().optional().nullable(),
 });
 
-export const envioCreateSchema = baseEnvioSchema.refine(data => {
+export const envioCreateSchema = baseEnvioSchemaObject.refine(data => {
     if (data.requiere_cobro_destino && (data.monto_cobro_destino === null || data.monto_cobro_destino === undefined || data.monto_cobro_destino < 0)) {
         return false;
     }
@@ -210,33 +205,31 @@ export const envioCreateSchema = baseEnvioSchema.refine(data => {
 }, { message: "Monto de cobro a destino es requerido si se activa la opción.", path: ["monto_cobro_destino"] });
 export type EnvioCreateValues = z.infer<typeof envioCreateSchema>;
 
-export const envioUpdateSchema = baseEnvioSchema.partial();
-// If the refinement is also needed for updates and can handle partial data:
-// export const envioUpdateSchema = baseEnvioSchema.partial().refine(data => { ... });
+export const envioUpdateSchema = baseEnvioSchemaObject.partial();
 export type EnvioUpdateValues = z.infer<typeof envioUpdateSchema>;
 
 
 // Validators for Reparto
-const baseRepartoSchema = z.object({
+const baseRepartoSchemaObject = z.object({
   nombre_reparto: z.string().optional().nullable(),
   repartidor_id: z.string().uuid("ID de repartidor inválido."),
   fecha_reparto: z.string().refine(val => !isNaN(Date.parse(val)), { message: "Fecha inválida" }),
-  estatus: estadoEnvioEnumSchema.default('pendiente_recoleccion'), // Reusing estado_envio_enum for simplicity
+  estatus: estadoEnvioEnumSchema.default('pendiente_recoleccion'),
   hora_inicio_estimada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
   hora_fin_estimada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
   distancia_total_estimada_km: z.number().positive().optional().nullable(),
   vehiculo_utilizado: z.string().optional().nullable(),
   notas: z.string().optional().nullable(),
 });
-export const repartoCreateSchema = baseRepartoSchema;
+export const repartoCreateSchema = baseRepartoSchemaObject;
 export type RepartoCreateValues = z.infer<typeof repartoCreateSchema>;
 
-export const repartoUpdateSchema = baseRepartoSchema.partial();
+export const repartoUpdateSchema = baseRepartoSchemaObject.partial();
 export type RepartoUpdateValues = z.infer<typeof repartoUpdateSchema>;
 
 
 // Validators for ParadaReparto
-const baseParadaRepartoSchema = z.object({
+const baseParadaRepartoSchemaObject = z.object({
   reparto_id: z.string().uuid("ID de reparto inválido."),
   envio_id: z.string().uuid("ID de envío inválido.").optional().nullable(),
   secuencia_parada: z.number().int().positive("Secuencia debe ser positiva."),
@@ -251,15 +244,15 @@ const baseParadaRepartoSchema = z.object({
   hora_estimada_llegada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
   estatus_parada: estadoEnvioEnumSchema.default('pendiente_recoleccion'),
 });
-export const paradaRepartoCreateSchema = baseParadaRepartoSchema;
+export const paradaRepartoCreateSchema = baseParadaRepartoSchemaObject;
 export type ParadaRepartoCreateValues = z.infer<typeof paradaRepartoCreateSchema>;
 
-export const paradaRepartoUpdateSchema = baseParadaRepartoSchema.partial();
+export const paradaRepartoUpdateSchema = baseParadaRepartoSchemaObject.partial();
 export type ParadaRepartoUpdateValues = z.infer<typeof paradaRepartoUpdateSchema>;
 
 
 // Validators for TarifaDistanciaCalculadora
-const baseTarifaDistanciaCalculadoraSchema = z.object({
+const baseTarifaDistanciaCalculadoraSchemaObject = z.object({
   tipo_servicio_id: z.string().uuid("ID tipo servicio inválido.").optional().nullable(),
   tipo_calculadora_servicio: tipoCalculadoraServicioEnumSchema,
   zona_geo: z.string().optional().nullable(),
@@ -272,14 +265,11 @@ const baseTarifaDistanciaCalculadoraSchema = z.object({
   activo: z.boolean().default(true),
 });
 
-export const tarifaDistanciaCalculadoraCreateSchema = baseTarifaDistanciaCalculadoraSchema.refine(data => data.distancia_min_km < data.distancia_max_km, {
+export const tarifaDistanciaCalculadoraCreateSchema = baseTarifaDistanciaCalculadoraSchemaObject.refine(data => data.distancia_min_km < data.distancia_max_km, {
   message: "Distancia mínima debe ser menor a la máxima.",
   path: ["distancia_min_km"],
 });
 export type TarifaDistanciaCalculadoraCreateValues = z.infer<typeof tarifaDistanciaCalculadoraCreateSchema>;
 
-export const tarifaDistanciaCalculadoraUpdateSchema = baseTarifaDistanciaCalculadoraSchema.partial();
-// If the refinement is also needed for updates and can handle partial data:
-// export const tarifaDistanciaCalculadoraUpdateSchema = baseTarifaDistanciaCalculadoraSchema.partial().refine(data => data.distancia_min_km < data.distancia_max_km, { ... });
+export const tarifaDistanciaCalculadoraUpdateSchema = baseTarifaDistanciaCalculadoraSchemaObject.partial();
 export type TarifaDistanciaCalculadoraUpdateValues = z.infer<typeof tarifaDistanciaCalculadoraUpdateSchema>;
-

@@ -3,14 +3,23 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { Cliente, DbResult, DbResultList } from '@/types';
 import { clienteCreateSchema, clienteUpdateSchema, type ClienteCreateValues, type ClienteUpdateValues } from '@/lib/validators';
-import { z } from 'zod';
+import { isWithinMarDelPlata } from '@/lib/maps-utils'; // Import the validator
 
 export async function addClienteAction(values: ClienteCreateValues): Promise<DbResult<Cliente>> {
   const supabase = createSupabaseServerClient();
   const validation = clienteCreateSchema.safeParse(values);
 
   if (!validation.success) {
-    return { data: null, error: new Error(`Error de validación: ${validation.error.flatten().fieldErrors}`) };
+    // console.error("Validation errors:", validation.error.flatten().fieldErrors);
+    return { data: null, error: new Error(`Error de validación: ${JSON.stringify(validation.error.flatten().fieldErrors)}`) };
+  }
+
+  const { latitud_predeterminada, longitud_predeterminada } = validation.data;
+
+  if (latitud_predeterminada != null && longitud_predeterminada != null) {
+    if (!isWithinMarDelPlata(latitud_predeterminada, longitud_predeterminada)) {
+      return { data: null, error: new Error("La dirección geocodificada está fuera del área de Mar del Plata.") };
+    }
   }
 
   const { data, error } = await supabase
@@ -33,6 +42,14 @@ export async function updateClienteAction(id: string, values: ClienteUpdateValue
   const validation = clienteUpdateSchema.safeParse(values);
   if (!validation.success) {
     return { data: null, error: new Error(`Error de validación: ${JSON.stringify(validation.error.flatten().fieldErrors)}`) };
+  }
+  
+  const { latitud_predeterminada, longitud_predeterminada } = validation.data;
+
+  if (latitud_predeterminada != null && longitud_predeterminada != null) {
+    if (!isWithinMarDelPlata(latitud_predeterminada, longitud_predeterminada)) {
+      return { data: null, error: new Error("La dirección geocodificada está fuera del área de Mar del Plata.") };
+    }
   }
 
   const { data, error } = await supabase
@@ -82,7 +99,7 @@ export async function getClientesAction(
   const query = supabase.from('clientes').select('*', { count: 'exact' });
 
   if (searchTerm) {
-    query.or(`nombre_completo.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,telefono.ilike.%${searchTerm}%`);
+    query.or(`nombre_completo.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,telefono.ilike.%${searchTerm}%,direccion_predeterminada.ilike.%${searchTerm}%`);
   }
 
   const start = (page - 1) * pageSize;
