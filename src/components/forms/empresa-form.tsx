@@ -16,10 +16,11 @@ import { Loader2 } from 'lucide-react';
 
 const empresaFormSchema = z.object({
   nombre: z.string().min(2, { message: "El nombre de la empresa debe tener al menos 2 caracteres." }),
-  rfc: z.string().optional(), // Podrías agregar una validación regex más específica para RFC si es necesario
-  direccion: z.string().optional(),
-  contactoNombre: z.string().optional(),
-  contactoEmail: z.string().email({ message: "Por favor, introduce un email de contacto válido." }).optional().or(z.literal('')),
+  rfc: z.string().optional(),
+  direccion_fiscal: z.string().optional(), // Mapea a direccion_fiscal
+  nombre_responsable: z.string().optional(), // Mapea a nombre_responsable
+  email_contacto: z.string().email({ message: "Por favor, introduce un email de contacto válido." }).optional().or(z.literal('')), // Mapea a email_contacto
+  telefono_contacto: z.string().optional().nullable(), // Añadido
   activa: z.boolean().default(true),
 });
 
@@ -29,9 +30,10 @@ interface EmpresaFormProps {
   initialData?: Partial<EmpresaFormValues>;
   onSubmit: (values: EmpresaFormValues) => Promise<void>;
   submitButtonText?: string;
+  onSuccess?: () => void;
 }
 
-export function EmpresaForm({ initialData, onSubmit, submitButtonText = "Guardar Empresa" }: EmpresaFormProps) {
+export function EmpresaForm({ initialData, onSubmit, submitButtonText = "Guardar Empresa", onSuccess }: EmpresaFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,9 +42,10 @@ export function EmpresaForm({ initialData, onSubmit, submitButtonText = "Guardar
     defaultValues: initialData || {
       nombre: "",
       rfc: "",
-      direccion: "",
-      contactoNombre: "",
-      contactoEmail: "",
+      direccion_fiscal: "",
+      nombre_responsable: "",
+      email_contacto: "",
+      telefono_contacto: "",
       activa: true,
     },
   });
@@ -51,10 +54,11 @@ export function EmpresaForm({ initialData, onSubmit, submitButtonText = "Guardar
     setIsLoading(true);
     try {
       await onSubmit(values);
+      if (onSuccess) onSuccess();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Hubo un problema al guardar la empresa.",
+        description: (error as Error).message || "Hubo un problema al guardar la empresa.",
         variant: "destructive",
       });
     } finally {
@@ -93,7 +97,7 @@ export function EmpresaForm({ initialData, onSubmit, submitButtonText = "Guardar
         />
         <FormField
           control={form.control}
-          name="direccion"
+          name="direccion_fiscal"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Dirección Fiscal</FormLabel>
@@ -109,10 +113,10 @@ export function EmpresaForm({ initialData, onSubmit, submitButtonText = "Guardar
         />
         <FormField
           control={form.control}
-          name="contactoNombre"
+          name="nombre_responsable"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nombre del Contacto</FormLabel>
+              <FormLabel>Nombre del Responsable/Contacto</FormLabel>
               <FormControl>
                 <Input placeholder="Ej: Ana López" {...field} />
               </FormControl>
@@ -122,12 +126,25 @@ export function EmpresaForm({ initialData, onSubmit, submitButtonText = "Guardar
         />
         <FormField
           control={form.control}
-          name="contactoEmail"
+          name="email_contacto"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Email del Contacto</FormLabel>
               <FormControl>
                 <Input type="email" placeholder="Ej: ana.lopez@empresa.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="telefono_contacto"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Teléfono del Contacto</FormLabel>
+              <FormControl>
+                <Input placeholder="Ej: 55 0000 0000" {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>

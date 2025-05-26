@@ -15,10 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 
 const clienteFormSchema = z.object({
-  nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
+  nombre_completo: z.string().min(2, { message: "El nombre completo debe tener al menos 2 caracteres." }),
   email: z.string().email({ message: "Por favor, introduce un email válido." }).optional().or(z.literal('')),
   telefono: z.string().optional(),
-  direccion: z.string().optional(),
+  direccion: z.string().optional(), // Este campo corresponderá a direccion_predeterminada
   activo: z.boolean().default(true),
 });
 
@@ -28,16 +28,17 @@ interface ClienteFormProps {
   initialData?: Partial<ClienteFormValues>;
   onSubmit: (values: ClienteFormValues) => Promise<void>;
   submitButtonText?: string;
+  onSuccess?: () => void; // Callback opcional para ejecutar en caso de éxito
 }
 
-export function ClienteForm({ initialData, onSubmit, submitButtonText = "Guardar Cliente" }: ClienteFormProps) {
+export function ClienteForm({ initialData, onSubmit, submitButtonText = "Guardar Cliente", onSuccess }: ClienteFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteFormSchema),
     defaultValues: initialData || {
-      nombre: "",
+      nombre_completo: "",
       email: "",
       telefono: "",
       direccion: "",
@@ -49,10 +50,11 @@ export function ClienteForm({ initialData, onSubmit, submitButtonText = "Guardar
     setIsLoading(true);
     try {
       await onSubmit(values);
+      if (onSuccess) onSuccess();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Hubo un problema al guardar el cliente.",
+        description: (error as Error).message || "Hubo un problema al guardar el cliente.",
         variant: "destructive",
       });
     } finally {
@@ -65,7 +67,7 @@ export function ClienteForm({ initialData, onSubmit, submitButtonText = "Guardar
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="nombre"
+          name="nombre_completo"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nombre Completo</FormLabel>
@@ -107,7 +109,7 @@ export function ClienteForm({ initialData, onSubmit, submitButtonText = "Guardar
           name="direccion"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Dirección</FormLabel>
+              <FormLabel>Dirección Predeterminada</FormLabel>
               <FormControl>
                 <Input placeholder="Ej: Av. Siempre Viva 742" {...field} />
               </FormControl>
