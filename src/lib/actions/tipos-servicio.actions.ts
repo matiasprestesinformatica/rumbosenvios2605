@@ -100,3 +100,26 @@ export async function getTiposServicioAction(
   }
   return { data, error: null, count };
 }
+
+export async function getTiposServicioForSelectAction(
+  { activo = true }: { activo?: boolean } = {}
+): Promise<DbResultList<Pick<TipoServicio, 'id' | 'nombre'>>> {
+  const supabase = createSupabaseServerClient();
+  let query = supabase
+    .from('tipos_servicio')
+    .select('id, nombre');
+  
+  if (activo !== undefined) {
+    query = query.eq('activo', activo);
+  }
+  
+  query = query.order('nombre', { ascending: true });
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    console.error('Error fetching tipos_servicio for select:', error.message);
+    return { data: null, error: new Error(error.message), count: null };
+  }
+  return { data, error: null, count: count ?? data?.length ?? 0 };
+}
