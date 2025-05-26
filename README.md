@@ -110,7 +110,7 @@ Este proyecto está preparado para usar Supabase, pero **debes configurarlo manu
     npx supabase login
 
     # Vincula tu proyecto local con tu proyecto Supabase remoto
-    # npx supabase link --project-ref TU_PROJECT_ID
+    # npx supabase link --project-ref gtedfpsnrtpepwoeelfc
     # (Encuentra TU_PROJECT_ID en la URL de tu dashboard de Supabase o en Configuración del Proyecto > General)
 
     # Aplica las migraciones locales a tu base de datos remota
