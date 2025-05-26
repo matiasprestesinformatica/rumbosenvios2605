@@ -48,8 +48,8 @@ export function RepartoForm({
     resolver: zodResolver(repartoCreateSchema),
     defaultValues: initialData || {
       nombre_reparto: `Reparto ${new Date().toLocaleDateString('es-AR')}`,
-      repartidor_id: '',
-      fecha_reparto: new Date().toISOString().split('T')[0], // Default to today
+      repartidor_id: '', // Default to empty string
+      fecha_reparto: new Date().toISOString().split('T')[0],
       estatus: 'pendiente_recoleccion',
       envios_ids: [],
       hora_inicio_estimada: "09:00",
@@ -110,7 +110,10 @@ export function RepartoForm({
                     <User className="h-4 w-4 text-muted-foreground" />
                     Repartidor Asignado
                 </FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                    onValueChange={field.onChange}
+                    value={field.value || undefined} // Pass undefined if field.value is ''
+                >
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Selecciona un repartidor" />
