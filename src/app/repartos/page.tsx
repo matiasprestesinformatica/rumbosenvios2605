@@ -6,13 +6,14 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"; // Added import
 import { PlusCircle, Search, Edit, Loader2, Filter, Route as RouteIcon, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getRepartosAction } from "@/lib/actions/repartos.actions";
 import type { Reparto, EstadoEnvioEnum, Repartidor } from "@/types";
 import { DataTable, type ColumnDef } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { DatePicker } from "@/components/ui/date-picker"; // Assuming you might want this for filtering
+import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getRepartidoresAction } from "@/lib/actions/repartidores.actions";
