@@ -4,6 +4,11 @@ config(); // Load environment variables from .env file for local development
 
 // Import your flows here to make them available for local testing with 'genkit start'
 // Example: import './flows/example-flow';
+import './flows/suggest-delivery-options';
+import './flows/prioritize-delivery-schedule';
+import './flows/suggest-delivery-routes';
+import './flows/summarize-delivery-data';
+
 
 // This file is primarily used by the Genkit CLI to start the development server
 // and make your flows available for testing locally (e.g., in the Genkit Developer UI).

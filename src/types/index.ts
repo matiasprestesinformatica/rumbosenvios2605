@@ -1,4 +1,5 @@
 
+
 import type { LucideIcon } from 'lucide-react';
 
 export type NavItem = {
@@ -57,6 +58,8 @@ export interface Empresa {
   razon_social?: string | null;
   rfc?: string | null;
   direccion_fiscal?: string | null;
+  latitud?: number | null;
+  longitud?: number | null;
   telefono_contacto?: string | null;
   email_contacto?: string | null;
   nombre_responsable?: string | null;
@@ -74,6 +77,8 @@ export interface Cliente {
   email?: string | null;
   telefono?: string | null;
   direccion_predeterminada?: string | null;
+  latitud_predeterminada?: number | null;
+  longitud_predeterminada?: number | null;
   empresa_id?: string | null; // UUID, FK to empresas
   fecha_nacimiento?: string | null; // DATE
   notas_internas?: string | null;
@@ -266,6 +271,8 @@ export type Order = Pick<Envio,
   deadline: string; // Alias for fecha_entrega_estimada_fin
   packageType?: string; // Simplified from tipo_paquete.nombre
   timeWindowStart?: string; // UI state
+  // Added for AI prioritization flow
+  timeWindowEnd?: string;
 };
 
 
@@ -276,11 +283,26 @@ export type Driver = Pick<Repartidor,
   'estatus' |
   'tipo_vehiculo' | // used for vehicle description
   'telefono' | // used for contact
-  'current_location'
+  'direccion' // Using this for currentLocation as it's more likely to exist
 > & {
-  name: string; // alias for nombre_completo
-  vehicle: string; // simplified from tipo_vehiculo, marca, modelo
-  contact: string; // alias for telefono
+  name?: string; // alias for nombre_completo
+  vehicle?: string; // simplified from tipo_vehiculo, marca, modelo
+  contact?: string; // alias for telefono
+  currentLocation?: string; // Derived from direccion
   availabilityStart?: string; // For AI prioritization
   availabilityEnd?: string; // For AI prioritization
 };
+
+// AI Suggestion Types
+export type DeliveryOptionSuggestion = {
+  optionName: string;
+  description: string;
+  estimatedTime?: string;
+  iconHint?: 'Truck' | 'Bike' | 'Zap' | 'Package';
+};
+
+export type AISuggestions = {
+  suggestions: DeliveryOptionSuggestion[];
+  disclaimer?: string;
+};
+
