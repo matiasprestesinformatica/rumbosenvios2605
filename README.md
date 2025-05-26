@@ -10,7 +10,7 @@ Este es un proyecto Next.js para Rumbos Envios, una plataforma de gestión de en
 - Tailwind CSS
 - ShadCN UI
 - Genkit (para funcionalidades de IA con Google AI)
-- Supabase (para base de datos y backend - requiere configuración manual)
+- Supabase (para base de datos y backend)
 
 ## Empezando
 
@@ -29,13 +29,13 @@ Este es un proyecto Next.js para Rumbos Envios, una plataforma de gestión de en
     Ejemplo de `.env.local`:
     ```env
     # Supabase
-    NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_de_supabase
-    # Opcional: SUPABASE_SERVICE_ROLE_KEY si necesitas operaciones privilegiadas desde el backend
+    NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase_aqui
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_de_supabase_aqui
+    # Opcional: SUPABASE_SERVICE_ROLE_KEY si necesitas operaciones privilegiadas desde el backend (NO RECOMENDADO PARA CLIENTE)
     # SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_de_supabase
 
     # Google AI (para Genkit)
-    GOOGLE_API_KEY=tu_api_key_de_google_ai
+    GOOGLE_API_KEY=tu_api_key_de_google_ai_aqui
     ```
 
 3.  **Ejecutar el servidor de desarrollo:**
@@ -62,12 +62,21 @@ Este es un proyecto Next.js para Rumbos Envios, una plataforma de gestión de en
     -   `/repartos`: Gestión de rutas de entrega.
     -   `/mapa-envios`: Visualización de envíos en mapa.
     -   `/configuracion`: Ajustes de la aplicación y cuenta.
+    -   `/pricing`: Calculadora de precios.
+    -   `/delivery-suggestions`: Sugerencias de rutas por IA.
+    -   `/tracking`: Seguimiento de envíos.
+    -   `/orders`: Gestión de pedidos (órdenes).
 -   `src/components/`: Componentes React reutilizables.
     -   `layout/`: Componentes de estructura principal (AppShell, Sidebar).
     -   `ui/`: Componentes de ShadCN UI.
     -   `icons/`: Iconos SVG personalizados.
+    -   `forms/`: Formularios reutilizables (ClienteForm, EmpresaForm, etc.).
 -   `src/lib/`: Utilidades y lógica compartida.
--   `src/types/`: Definiciones de TypeScript.
+    -   `actions/`: Server Actions para interactuar con Supabase.
+    -   `supabase/`: Configuración del cliente de Supabase.
+    -   `validators/`: Esquemas de validación Zod.
+    -   `utils.ts`: Funciones de utilidad general.
+-   `src/types/`: Definiciones de TypeScript (incluyendo tipos de base de datos).
 -   `src/ai/`: Lógica relacionada con Genkit.
     -   `genkit.ts`: Configuración e inicialización de Genkit.
     -   `dev.ts`: Archivo para el servidor de desarrollo de Genkit.
@@ -76,53 +85,47 @@ Este es un proyecto Next.js para Rumbos Envios, una plataforma de gestión de en
 
 ## Configuración de Supabase
 
-Este proyecto está preparado para usar Supabase, pero **debes configurarlo manualmente**:
-
 1.  Crea un proyecto en [Supabase](https://supabase.com/).
 2.  Obtén la URL de tu proyecto y la `anon key` pública.
 3.  Añádelas a tu archivo `.env.local` como `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-4.  **Instala el cliente de Supabase:**
+4.  **Instala la CLI de Supabase globalmente (si no la tienes):**
     ```bash
-    npm install @supabase/supabase-js
+    npm install supabase --save-dev 
+    # o si prefieres globalmente (puede requerir sudo):
+    # npm install supabase -g
     ```
-5.  **Configura el cliente de Supabase en tu aplicación:**
-    Crea un archivo, por ejemplo `src/lib/supabase/client.ts`, para inicializar el cliente de Supabase.
-    ```typescript
-    // src/lib/supabase/client.ts
-    import { createBrowserClient } from '@supabase/ssr'; // o createClient si no usas SSR helpers
-
-    export function createSupabaseBrowserClient() {
-      return createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-    }
-    ```
-    Si necesitas acceso desde el servidor (Server Actions, Route Handlers), considera usar `createSupabaseServerClient` de `@supabase/ssr` o el cliente estándar con la `service_role_key`.
-
-6.  **Define tu esquema de base de datos:**
-    El esquema inicial se encuentra en `supabase/migrations/0001_create_initial_schema.sql`. Puedes aplicar estas migraciones usando la [CLI de Supabase](https://supabase.com/docs/guides/cli) o ejecutando el script SQL directamente en el editor SQL de tu dashboard de Supabase.
-    
-    **Para aplicar con la CLI de Supabase (recomendado):**
-    Asegúrate de tener la CLI instalada y configurada para tu proyecto.
+5.  **Inicia sesión en la CLI de Supabase:**
     ```bash
-    # Inicia sesión si aún no lo has hecho
     npx supabase login
-
-    # Vincula tu proyecto local con tu proyecto Supabase remoto
-    # npx supabase link --project-ref gtedfpsnrtpepwoeelfc
-    # (Encuentra TU_PROJECT_ID en la URL de tu dashboard de Supabase o en Configuración del Proyecto > General)
-
-    # Aplica las migraciones locales a tu base de datos remota
-    npx supabase db push
-
-    # O, para desarrollo local si usas Supabase localmente:
-    # npx supabase start (si no está corriendo)
-    # npx supabase db reset (para aplicar migraciones a una base local limpia)
     ```
+6.  **Vincula tu proyecto local con tu proyecto Supabase remoto:**
+    Navega al directorio raíz de tu proyecto y ejecuta:
+    ```bash
+    npx supabase link --project-ref TU_PROJECT_ID
+    ```
+    (Encuentra `TU_PROJECT_ID` en la URL de tu dashboard de Supabase o en Configuración del Proyecto > General).
 
-7.  **Habilita extensiones necesarias:**
-    El script de migración incluye comentarios para extensiones como `postgis`. Asegúrate de que estén habilitadas en tu instancia de Supabase si las funcionalidades correspondientes (ej. `GEOMETRY` type) son necesarias. Puedes hacerlo desde el Dashboard de Supabase > Database > Extensions.
+7.  **Aplica las migraciones a tu base de datos remota:**
+    El esquema inicial y los datos de ejemplo se encuentran en `supabase/migrations/0001_create_initial_schema.sql`.
+    Para aplicar esta migración (y futuras) a tu base de datos remota:
+    ```bash
+    npx supabase db push
+    ```
+    Esto creará las tablas, tipos, funciones, RLS y datos de ejemplo definidos en el archivo de migración.
+
+8.  **(Opcional) Para desarrollo local con Supabase local:**
+    Si prefieres trabajar con una instancia local de Supabase:
+    ```bash
+    # Iniciar servicios de Supabase localmente (Docker debe estar corriendo)
+    npx supabase start
+
+    # Aplicar migraciones y datos de seed a la base de datos local
+    npx supabase db reset
+    ```
+    Cuando termines el desarrollo local y quieras aplicar los cambios al proyecto remoto, usa `npx supabase db push`.
+
+9.  **Habilita extensiones necesarias (si no se activaron automáticamente):**
+    El script de migración intenta crear la extensión `uuid-ossp`. Si comentaste `postgis` y la necesitas, habilítala manualmente. Puedes hacerlo desde el Dashboard de Supabase > Database > Extensions.
 
 ## Componentes ShadCN UI
 

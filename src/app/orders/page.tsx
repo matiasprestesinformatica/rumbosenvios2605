@@ -1,3 +1,4 @@
+
 "use client"; // Required for useToast and potential form interactions
 
 import { useState } from 'react';
@@ -6,23 +7,39 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, PlusCircle, Search, Sparkles } from "lucide-react";
-import type { Order, Driver } from "@/types";
+import type { Order, Driver, Envio } from "@/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { prioritizeDeliveryScheduleServerAction } from "@/lib/actions"; // Assuming this will be created
+import { prioritizeDeliverySchedule } from '@/ai/flows/prioritize-delivery-schedule'; // Direct import
+import type { PrioritizeDeliveryScheduleInput, PrioritizeDeliveryScheduleOutput } from '@/ai/flows/prioritize-delivery-schedule';
+
+
+// Server action to wrap the Genkit flow call
+async function prioritizeDeliveryScheduleAction(input: PrioritizeDeliveryScheduleInput): Promise<PrioritizeDeliveryScheduleOutput> {
+  try {
+    const result = await prioritizeDeliverySchedule(input); // Call the Genkit flow directly
+    if (!result || !Array.isArray(result)) {
+      return [];
+    }
+    return result;
+  } catch (error) {
+    console.error('Error in prioritizeDeliveryScheduleAction:', error);
+    throw new Error(`AI service error: ${(error as Error).message}`);
+  }
+}
 
 const MOCK_ORDERS: Order[] = [
-  { id: "ORD1001", customerName: "Elena Vasquez", deliveryAddress: "Av. Insurgentes Sur 100, CDMX", status: "Pending", deadline: "2024-07-29T10:00:00Z", packageType: "Documento", urgency: "high" },
-  { id: "ORD1002", customerName: "Juan Carlos Rios", deliveryAddress: "Calle Madero 55, Guadalajara", status: "In-Transit", assignedDriverId: "DRV001", deadline: "2024-07-28T15:30:00Z", packageType: "Paquete Pequeño", urgency: "medium" },
-  { id: "ORD1003", customerName: "Beatriz Solano", deliveryAddress: "Paseo de la Reforma 500, CDMX", status: "Delivered", assignedDriverId: "DRV002", deadline: "2024-07-27T12:00:00Z", packageType: "Paquete Mediano", urgency: "low" },
-  { id: "ORD1004", customerName: "Ricardo Lara", deliveryAddress: "Av. Chapultepec 20, Monterrey", status: "Pending", deadline: "2024-07-29T18:00:00Z", packageType: "Paquete Grande", urgency: "medium" },
-  { id: "ORD1005", customerName: "Fernanda Ochoa", deliveryAddress: "Calle 5 de Mayo 10, Puebla", status: "Cancelled", deadline: "2024-07-28T09:00:00Z", packageType: "Documento", urgency: "high" },
+  { id: "ORD1001", customerName: "Elena Vasquez", deliveryAddress: "Av. Insurgentes Sur 100, CDMX", status: "pendiente_confirmacion", deadline: "2024-07-29T10:00:00Z", packageType: "Documento", urgency: "high", cliente_id: "uuid-cliente-1", direccion_destino:"Av. Insurgentes Sur 100, CDMX", estatus: "pendiente_confirmacion", fecha_entrega_estimada_fin: "2024-07-29T10:00:00Z", tipo_paquete_id: "uuid-tipo-paquete-doc" },
+  { id: "ORD1002", customerName: "Juan Carlos Rios", deliveryAddress: "Calle Madero 55, Guadalajara", status: "en_camino", assignedDriverId: "DRV001", deadline: "2024-07-28T15:30:00Z", packageType: "Paquete Pequeño", urgency: "medium", cliente_id: "uuid-cliente-2", direccion_destino: "Calle Madero 55, Guadalajara", estatus: "en_camino", repartidor_asignado_id: "DRV001", fecha_entrega_estimada_fin: "2024-07-28T15:30:00Z", tipo_paquete_id: "uuid-tipo-paquete-peq" },
+  { id: "ORD1003", customerName: "Beatriz Solano", deliveryAddress: "Paseo de la Reforma 500, CDMX", status: "entregado", assignedDriverId: "DRV002", deadline: "2024-07-27T12:00:00Z", packageType: "Paquete Mediano", urgency: "low", cliente_id: "uuid-cliente-3", direccion_destino: "Paseo de la Reforma 500, CDMX", estatus: "entregado", repartidor_asignado_id: "DRV002", fecha_entrega_estimada_fin: "2024-07-27T12:00:00Z", tipo_paquete_id: "uuid-tipo-paquete-med" },
+  { id: "ORD1004", customerName: "Ricardo Lara", deliveryAddress: "Av. Chapultepec 20, Monterrey", status: "pendiente_confirmacion", deadline: "2024-07-29T18:00:00Z", packageType: "Paquete Grande", urgency: "medium", cliente_id: "uuid-cliente-4", direccion_destino: "Av. Chapultepec 20, Monterrey", estatus: "pendiente_confirmacion", fecha_entrega_estimada_fin: "2024-07-29T18:00:00Z", tipo_paquete_id: "uuid-tipo-paquete-gra" },
+  { id: "ORD1005", customerName: "Fernanda Ochoa", deliveryAddress: "Calle 5 de Mayo 10, Puebla", status: "cancelado", deadline: "2024-07-28T09:00:00Z", packageType: "Documento", urgency: "high", cliente_id: "uuid-cliente-5", direccion_destino: "Calle 5 de Mayo 10, Puebla", estatus: "cancelado", fecha_entrega_estimada_fin: "2024-07-28T09:00:00Z", tipo_paquete_id: "uuid-tipo-paquete-doc" },
 ];
 
 const MOCK_DRIVERS_FOR_PRIORITIZATION: Driver[] = [
-  { id: "DRV001", name: "Carlos Rodríguez", status: "Available", vehicle: "Motocicleta", contact: "", currentLocation: "Central", availabilityStart: "2024-07-28T08:00:00Z", availabilityEnd: "2024-07-28T20:00:00Z" },
-  { id: "DRV002", name: "Laura Gómez", status: "Available", vehicle: "Bicicleta", contact: "", currentLocation: "Norte", availabilityStart: "2024-07-28T09:00:00Z", availabilityEnd: "2024-07-28T18:00:00Z" },
+  { id: "DRV001", name: "Carlos Rodríguez", status: "disponible", vehicle: "Motocicleta", contact: "", currentLocation: "Central", availabilityStart: "2024-07-28T08:00:00Z", availabilityEnd: "2024-07-28T20:00:00Z", nombre_completo: "Carlos Rodríguez", estatus: "disponible", tipo_vehiculo: "moto", telefono: ""  },
+  { id: "DRV002", name: "Laura Gómez", status: "disponible", vehicle: "Bicicleta", contact: "", currentLocation: "Norte", availabilityStart: "2024-07-28T09:00:00Z", availabilityEnd: "2024-07-28T18:00:00Z", nombre_completo: "Laura Gómez", estatus: "disponible", tipo_vehiculo:"bicicleta", telefono: "" },
 ];
 
 
@@ -34,8 +51,9 @@ export default function OrdersPage() {
   const handlePrioritizeWithAi = async () => {
     setIsLoadingAi(true);
     try {
-      const ordersToPrioritize = MOCK_ORDERS.filter(o => o.status === 'Pending' || o.status === 'In-Transit');
-      const result = await prioritizeDeliveryScheduleServerAction({
+      const ordersToPrioritize = MOCK_ORDERS.filter(o => o.status === 'pendiente_confirmacion' || o.status === 'en_camino' || o.status === 'pendiente_recoleccion');
+      
+      const aiInput: PrioritizeDeliveryScheduleInput = {
         deliveries: ordersToPrioritize.map(o => ({
           deliveryId: o.id,
           address: o.deliveryAddress,
@@ -51,13 +69,14 @@ export default function OrdersPage() {
           availabilityEnd: d.availabilityEnd || new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() , // 8 hours from now
         })),
         currentConditions: "Tráfico moderado, clima soleado."
-      });
+      };
+
+      const result = await prioritizeDeliveryScheduleAction(aiInput);
       
-      // Update local MOCK_ORDERS based on AI result (simplified)
       const updatedOrders = MOCK_ORDERS.map(order => {
         const aiOrderInfo = result.find(aiO => aiO.deliveryId === order.id);
         if (aiOrderInfo) {
-          return { ...order, assignedDriverId: aiOrderInfo.assignedDriverId, status: "In-Transit" as Order["status"]}; // Example update
+          return { ...order, assignedDriverId: aiOrderInfo.assignedDriverId, status: "en_camino" as Order["estatus"]}; 
         }
         return order;
       });
@@ -65,7 +84,7 @@ export default function OrdersPage() {
 
       toast({
         title: "Pedidos Priorizados por IA",
-        description: `Se ${result.length} pedidos han sido analizados y priorizados.`,
+        description: `${result.length} pedidos han sido analizados y priorizados.`,
         variant: "default",
       });
     } catch (error) {
@@ -135,21 +154,21 @@ export default function OrdersPage() {
                   <TableCell>
                     <Badge
                       variant={
-                        order.status === "Delivered" ? "default" :
-                        order.status === "In-Transit" ? "secondary" :
-                        order.status === "Pending" ? "outline" :
-                        order.status === "Cancelled" ? "destructive" : // Specific destructive style
-                        "destructive" // Default for 'Failed'
+                        order.estatus === "entregado" ? "default" :
+                        order.estatus === "en_camino" || order.estatus === "en_recoleccion" || order.estatus === "recolectado" ? "secondary" :
+                        order.estatus === "pendiente_confirmacion" || order.estatus === "pendiente_recoleccion" ? "outline" :
+                        order.estatus === "cancelado" ? "destructive" : 
+                        "destructive" 
                       }
                       className={
-                        order.status === "Delivered" ? "bg-green-500/20 text-green-700 border-green-500/30 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20" :
-                        order.status === "In-Transit" ? "bg-blue-500/20 text-blue-700 border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20" :
-                        order.status === "Pending" ? "bg-yellow-500/20 text-yellow-700 border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20" :
-                        order.status === "Cancelled" ? "bg-gray-500/20 text-gray-700 border-gray-500/30 dark:bg-gray-500/10 dark:text-gray-400 dark:border-gray-500/20" :
-                        "" // destructive for Failed handles its own style
+                        order.estatus === "entregado" ? "bg-green-500/20 text-green-700 border-green-500/30 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20" :
+                        order.estatus === "en_camino" || order.estatus === "en_recoleccion" || order.estatus === "recolectado" || order.estatus === "llegando_destino" ? "bg-blue-500/20 text-blue-700 border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20" :
+                        order.estatus === "pendiente_confirmacion" || order.estatus === "pendiente_recoleccion" ? "bg-yellow-500/20 text-yellow-700 border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20" :
+                        order.estatus === "cancelado" ? "bg-gray-500/20 text-gray-700 border-gray-500/30 dark:bg-gray-500/10 dark:text-gray-400 dark:border-gray-500/20" :
+                        "" 
                       }
                     >
-                      {order.status}
+                      {order.estatus.replace(/_/g, ' ')}
                     </Badge>
                   </TableCell>
                   <TableCell>{order.assignedDriverId || "N/A"}</TableCell>
