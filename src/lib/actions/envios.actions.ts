@@ -1,7 +1,7 @@
 
 'use server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type { Envio, DbResult, DbResultList } from '@/types';
+import type { Envio, DbResult, DbResultList, EnvioParaMapa } from '@/types';
 import { envioCreateSchema, envioUpdateSchema, type EnvioCreateValues, type EnvioUpdateValues } from '@/lib/validators';
 import { z } from 'zod';
 
@@ -169,7 +169,7 @@ export async function getEnviosAction(
 
 export async function getEnviosPendientesForSelectAction(
   { pageSize = 200, empresaOrigenId }: { pageSize?: number, empresaOrigenId?: string } = {}
-): Promise<DbResultList<Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'cliente_id' | 'empresa_origen_id'> & { cliente?: Pick<Cliente, 'nombre_completo'> }>> {
+): Promise<DbResultList<Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'cliente_id' | 'empresa_origen_id'> & { cliente?: Pick<Cliente, 'nombre_completo'> | null }>> {
   const supabase = createSupabaseServerClient();
   let query = supabase
     .from('envios')
@@ -192,4 +192,54 @@ export async function getEnviosPendientesForSelectAction(
     return { data: null, error: new Error(error.message) };
   }
   return { data, error: null, count: data?.length };
+}
+
+export async function getEnviosForMapAction(
+  filter: 
+  | { type: 'reparto'; id: string }
+  | { type: 'todos_activos' }
+  | { type: 'pendientes_asignacion' }
+): Promise<DbResultList<EnvioParaMapa>> {
+  const supabase = createSupabaseServerClient();
+  let query = supabase
+    .from('envios')
+    .select(`
+      id,
+      tracking_number,
+      direccion_destino,
+      latitud_destino,
+      longitud_destino,
+      estatus,
+      reparto_id,
+      cliente:clientes (nombre_completo)
+    `)
+    .not('latitud_destino', 'is', null)
+    .not('longitud_destino', 'is', null);
+
+  switch (filter.type) {
+    case 'reparto':
+      query = query.eq('reparto_id', filter.id);
+      break;
+    case 'todos_activos':
+      query = query.not('estatus', 'in', '("entregado", "cancelado", "fallido")');
+      break;
+    case 'pendientes_asignacion':
+      query = query.is('reparto_id', null)
+                   .in('estatus', ['pendiente_confirmacion', 'pendiente_recoleccion', 'recolectado']);
+      break;
+  }
+
+  const { data, error } = await query.limit(500); // Limit for map display
+
+  if (error) {
+    console.error('Error fetching envios for map:', error.message);
+    return { data: null, error: new Error(error.message), count: null };
+  }
+  // Ensure cliente is null if not expanded, not undefined.
+  const formattedData = data?.map(envio => ({
+    ...envio,
+    cliente: envio.cliente || null
+  })) || null;
+
+  return { data: formattedData, error: null, count: formattedData?.length ?? 0 };
 }

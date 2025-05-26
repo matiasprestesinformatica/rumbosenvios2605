@@ -170,6 +170,7 @@ export interface Envio {
   fecha_entrega_real?: string | null; // TIMESTAMPTZ
   estatus: EstadoEnvioEnum;
   repartidor_asignado_id?: string | null; // UUID, FK to repartidores
+  reparto_id?: string | null; // UUID, FK to repartos
   tracking_number: string;
   costo_envio?: number | null; // NUMERIC(10,2)
   costo_seguro?: number | null; // NUMERIC(10,2)
@@ -183,11 +184,11 @@ export interface Envio {
   timeWindowEnd?: string;
   packageType?: string; // Simplified type from form
   urgency?: 'high' | 'medium' | 'low'; // Simplified urgency
-  cliente?: Pick<Cliente, 'id' | 'nombre_completo' | 'email'>; // For joins
-  empresa_origen?: Pick<Empresa, 'id' | 'nombre'>; // For joins
-  tipo_paquete?: Pick<TipoPaquete, 'id' | 'nombre'>; // For joins
-  tipo_servicio?: Pick<TipoServicio, 'id' | 'nombre'>; // For joins
-  repartidor_asignado?: Pick<Repartidor, 'id' | 'nombre_completo'>; // For joins
+  cliente?: Pick<Cliente, 'id' | 'nombre_completo' | 'email'> | null; // For joins
+  empresa_origen?: Pick<Empresa, 'id' | 'nombre'> | null; // For joins
+  tipo_paquete?: Pick<TipoPaquete, 'id' | 'nombre'> | null; // For joins
+  tipo_servicio?: Pick<TipoServicio, 'id' | 'nombre'> | null; // For joins
+  repartidor_asignado?: Pick<Repartidor, 'id' | 'nombre_completo'> | null; // For joins
 }
 
 export interface Reparto {
@@ -203,7 +204,7 @@ export interface Reparto {
   notas?: string | null;
   created_at: string; // TIMESTAMPTZ
   updated_at: string; // TIMESTAMPTZ
-  repartidor?: Pick<Repartidor, 'id' | 'nombre_completo'>; // For joins
+  repartidor?: Pick<Repartidor, 'id' | 'nombre_completo'> | null; // For joins
   paradas_reparto?: ParadaReparto[]; // For joins
 }
 
@@ -228,7 +229,7 @@ export interface ParadaReparto {
   firma_receptor_url?: string | null;
   created_at: string; // TIMESTAMPTZ
   updated_at: string; // TIMESTAMPTZ
-  envio?: Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'cliente_id' | 'estatus'> & { cliente?: Pick<Cliente, 'nombre_completo'> }; // For joins
+  envio?: Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'cliente_id' | 'estatus'> & { cliente?: Pick<Cliente, 'nombre_completo'> | null }; // For joins
 }
 
 
@@ -246,7 +247,7 @@ export interface TarifaDistanciaCalculadora {
   activo: boolean;
   created_at: string; // TIMESTAMPTZ
   updated_at: string; // TIMESTAMPTZ
-  tipo_servicio?: Pick<TipoServicio, 'id' | 'nombre'>; // For joins
+  tipo_servicio?: Pick<TipoServicio, 'id' | 'nombre'> | null; // For joins
 }
 
 // Generic type for CRUD operations
@@ -312,3 +313,15 @@ export type AISuggestions = {
   suggestions: DeliveryOptionSuggestion[];
   disclaimer?: string;
 };
+
+// For MapaEnviosPage
+export type EnvioParaMapa = Pick<Envio, 'id' | 'tracking_number' | 'direccion_destino' | 'latitud_destino' | 'longitud_destino' | 'estatus' | 'reparto_id'> & {
+  cliente?: Pick<Cliente, 'nombre_completo'> | null;
+};
+
+export type RepartoParaFiltroMapa = Pick<Reparto, 'id' | 'nombre_reparto' | 'fecha_reparto'>;
+
+export type MapaEnviosFilterType = 
+  | { type: 'reparto'; id: string }
+  | { type: 'todos_activos' }
+  | { type: 'pendientes_asignacion' };

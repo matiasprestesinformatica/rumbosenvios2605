@@ -1,7 +1,7 @@
 
 'use server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type { Reparto, ParadaReparto, DbResult, DbResultList, Envio } from '@/types';
+import type { Reparto, ParadaReparto, DbResult, DbResultList, Envio, RepartoParaFiltroMapa } from '@/types';
 import { repartoCreateSchema, repartoUpdateSchema, type RepartoCreateValues, type RepartoUpdateValues, paradaRepartoCreateSchema, paradaRepartoUpdateSchema, type ParadaRepartoCreateValues, type ParadaRepartoUpdateValues } from '@/lib/validators';
 import { z } from 'zod';
 
@@ -97,10 +97,14 @@ export async function addRepartoAction(values: RepartoCreateValues): Promise<DbR
     return { data: null, error: new Error(errorParadas.message) };
   }
 
-  // 4. Update status of selected envios
+  // 4. Update status of selected envios and assign reparto_id
   const { error: errorUpdateEnvios } = await supabase
     .from('envios')
-    .update({ estatus: 'en_recoleccion', repartidor_asignado_id: nuevoReparto.repartidor_id }) // Or 'asignado', 'en_ruta_recoleccion' etc.
+    .update({ 
+      estatus: 'en_recoleccion', 
+      repartidor_asignado_id: nuevoReparto.repartidor_id,
+      reparto_id: nuevoReparto.id 
+    }) 
     .in('id', envios_ids);
 
   if (errorUpdateEnvios) {
@@ -369,4 +373,20 @@ export async function updateParadaEstadoAction(paradaId: string, nuevoEstatus: E
   }
   
   return { data, error: null };
+}
+
+export async function getRepartosForMapFilterAction(): Promise<DbResultList<RepartoParaFiltroMapa>> {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('repartos')
+    .select('id, nombre_reparto, fecha_reparto')
+    .order('fecha_reparto', { ascending: false })
+    .order('nombre_reparto', { ascending: true })
+    .limit(100); // Limit for filter dropdown
+
+  if (error) {
+    console.error('Error fetching repartos for map filter:', error.message);
+    return { data: null, error: new Error(error.message), count: null };
+  }
+  return { data, error: null, count: data?.length ?? 0 };
 }
