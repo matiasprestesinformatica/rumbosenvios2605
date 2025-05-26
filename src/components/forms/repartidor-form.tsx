@@ -12,21 +12,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from 'lucide-react';
-import { estadoRepartidorEnumSchema, tipoVehiculoEnumSchema } from '@/lib/validators'; // Import enums
+import { estadoRepartidorEnumSchema, tipoVehiculoEnumSchema, repartidorCreateSchema } from '@/lib/validators'; // Import enums and schema
 
-const repartidorFormSchema = z.object({
-  nombre_completo: z.string().min(2, { message: "El nombre completo debe tener al menos 2 caracteres." }),
-  telefono: z.string().min(8, "Teléfono inválido."),
-  email: z.string().email("Email inválido.").optional().or(z.literal('')),
-  tipo_vehiculo: tipoVehiculoEnumSchema.optional().nullable(),
-  marca_vehiculo: z.string().optional(),
-  modelo_vehiculo: z.string().optional(),
-  placa_vehiculo: z.string().optional(),
-  estatus: estadoRepartidorEnumSchema.default('inactivo'),
-  activo: z.boolean().default(true),
-});
-
-export type RepartidorFormValues = z.infer<typeof repartidorFormSchema>;
+// Using repartidorCreateSchema for form values ensures all relevant fields are covered
+export type RepartidorFormValues = z.infer<typeof repartidorCreateSchema>;
 
 interface RepartidorFormProps {
   initialData?: Partial<RepartidorFormValues>;
@@ -40,17 +29,25 @@ export function RepartidorForm({ initialData, onSubmit, submitButtonText = "Guar
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<RepartidorFormValues>({
-    resolver: zodResolver(repartidorFormSchema),
+    resolver: zodResolver(repartidorCreateSchema), // Use the main create schema for validation
     defaultValues: initialData || {
       nombre_completo: "",
       telefono: "",
       email: "",
-      tipo_vehiculo: undefined,
+      tipo_vehiculo: undefined, // Use undefined for optional selects to show placeholder
       marca_vehiculo: "",
       modelo_vehiculo: "",
       placa_vehiculo: "",
-      estatus: 'inactivo',
-      activo: true,
+      estatus: 'inactivo', // Default status as per schema
+      activo: true, // Default as per schema
+      // Ensure all fields from repartidorCreateSchema have defaults if not in initialData
+      user_id: null,
+      fecha_nacimiento: null,
+      direccion: null,
+      anio_vehiculo: null,
+      numero_licencia: null,
+      fecha_vencimiento_licencia: null,
+      foto_perfil_url: null,
     },
   });
 
@@ -106,7 +103,7 @@ export function RepartidorForm({ initialData, onSubmit, submitButtonText = "Guar
             <FormItem>
               <FormLabel>Email (Opcional)</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="Ej: mario.repartidor@correo.com" {...field} />
+                <Input type="email" placeholder="Ej: mario.repartidor@correo.com" {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -118,18 +115,16 @@ export function RepartidorForm({ initialData, onSubmit, submitButtonText = "Guar
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tipo de Vehículo (Opcional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+              <Select onValueChange={field.onChange} value={field.value ?? undefined}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un tipo de vehículo" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="moto">Moto</SelectItem>
-                  <SelectItem value="auto">Auto</SelectItem>
-                  <SelectItem value="bicicleta">Bicicleta</SelectItem>
-                  <SelectItem value="utilitario_pequeno">Utilitario Pequeño</SelectItem>
-                  <SelectItem value="utilitario_grande">Utilitario Grande</SelectItem>
+                  {tipoVehiculoEnumSchema.options.map(option => (
+                     <SelectItem key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ')}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -143,7 +138,7 @@ export function RepartidorForm({ initialData, onSubmit, submitButtonText = "Guar
             <FormItem>
               <FormLabel>Marca del Vehículo (Opcional)</FormLabel>
               <FormControl>
-                <Input placeholder="Ej: Honda" {...field} />
+                <Input placeholder="Ej: Honda" {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -156,7 +151,7 @@ export function RepartidorForm({ initialData, onSubmit, submitButtonText = "Guar
             <FormItem>
               <FormLabel>Modelo del Vehículo (Opcional)</FormLabel>
               <FormControl>
-                <Input placeholder="Ej: Cargo 150" {...field} />
+                <Input placeholder="Ej: Cargo 150" {...field} value={field.value ?? ""}/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -169,7 +164,7 @@ export function RepartidorForm({ initialData, onSubmit, submitButtonText = "Guar
             <FormItem>
               <FormLabel>Placa del Vehículo (Opcional)</FormLabel>
               <FormControl>
-                <Input placeholder="Ej: XYZ-123" {...field} />
+                <Input placeholder="Ej: XYZ-123" {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -181,18 +176,16 @@ export function RepartidorForm({ initialData, onSubmit, submitButtonText = "Guar
           render={({ field }) => (
             <FormItem>
               <FormLabel>Estatus del Repartidor</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un estatus" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="disponible">Disponible</SelectItem>
-                  <SelectItem value="en_ruta">En Ruta</SelectItem>
-                  <SelectItem value="ocupado_otro">Ocupado (otro motivo)</SelectItem>
-                  <SelectItem value="inactivo">Inactivo</SelectItem>
-                  <SelectItem value="en_mantenimiento">En Mantenimiento</SelectItem>
+                   {estadoRepartidorEnumSchema.options.map(option => (
+                     <SelectItem key={option} value={option}>{option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ')}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
