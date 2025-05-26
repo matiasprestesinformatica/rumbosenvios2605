@@ -184,8 +184,8 @@ export interface Envio {
   timeWindowEnd?: string;
   packageType?: string; // Simplified type from form
   urgency?: 'high' | 'medium' | 'low'; // Simplified urgency
-  cliente?: Pick<Cliente, 'id' | 'nombre_completo' | 'email'> | null; // For joins
-  empresa_origen?: Pick<Empresa, 'id' | 'nombre'> | null; // For joins
+  cliente?: Pick<Cliente, 'id' | 'nombre_completo' | 'email' | 'direccion_predeterminada' | 'latitud_predeterminada' | 'longitud_predeterminada' | 'telefono'> | null; // For joins
+  empresa_origen?: Pick<Empresa, 'id' | 'nombre' | 'direccion_fiscal' | 'latitud' | 'longitud' | 'nombre_responsable' | 'telefono_contacto'> | null; // For joins
   tipo_paquete?: Pick<TipoPaquete, 'id' | 'nombre'> | null; // For joins
   tipo_servicio?: Pick<TipoServicio, 'id' | 'nombre'> | null; // For joins
   repartidor_asignado?: Pick<Repartidor, 'id' | 'nombre_completo'> | null; // For joins
@@ -325,3 +325,25 @@ export type MapaEnviosFilterType =
   | { type: 'reparto'; id: string }
   | { type: 'todos_activos' }
   | { type: 'pendientes_asignacion' };
+
+// For Reparto Lote Form
+export interface RepartoLoteClienteConfig {
+  cliente_id: string;
+  nombre_completo: string; // For display
+  direccion_predeterminada?: string | null; // For display
+  seleccionado: boolean;
+  tipo_servicio_id?: string | null;
+  descripcion_paquete?: string | null;
+  cantidad_paquetes: number;
+  costo_envio_manual?: number | null;
+}
+
+export interface RepartoLoteFormValues {
+  empresa_id: string;
+  fecha_reparto: string;
+  repartidor_id: string;
+  nombre_reparto?: string | null;
+  hora_inicio_estimada?: string | null;
+  hora_fin_estimada?: string | null;
+  clientes_config: RepartoLoteClienteConfig[];
+}

@@ -112,3 +112,18 @@ export async function getEmpresasAction(
   }
   return { data, error: null, count };
 }
+
+export async function getEmpresasForSelectAction(): Promise<DbResultList<Pick<Empresa, 'id' | 'nombre'>>> {
+  const supabase = createSupabaseServerClient();
+  const { data, error, count } = await supabase
+    .from('empresas')
+    .select('id, nombre')
+    .eq('activa', true)
+    .order('nombre', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching empresas for select:', error.message);
+    return { data: null, error: new Error(error.message), count: null };
+  }
+  return { data, error: null, count: count ?? data?.length ?? 0 };
+}

@@ -128,3 +128,23 @@ export async function getClientesForSelectAction(): Promise<DbResultList<Pick<Cl
   }
   return { data, error: null, count: count ?? data?.length ?? 0 };
 }
+
+export async function getClientesByEmpresaForSelectAction(empresaId: string): Promise<DbResultList<Pick<Cliente, 'id' | 'nombre_completo' | 'direccion_predeterminada'>>> {
+  const supabase = createSupabaseServerClient();
+  if (!empresaId) {
+    return { data: [], error: new Error("ID de empresa es requerido."), count: 0 };
+  }
+
+  const { data, error, count } = await supabase
+    .from('clientes')
+    .select('id, nombre_completo, direccion_predeterminada')
+    .eq('empresa_id', empresaId)
+    .eq('activo', true)
+    .order('nombre_completo', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching clientes by empresa for select:', error.message);
+    return { data: null, error: new Error(error.message), count: null };
+  }
+  return { data, error: null, count: count ?? data?.length ?? 0 };
+}

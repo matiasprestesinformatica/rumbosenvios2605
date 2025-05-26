@@ -74,7 +74,7 @@ export type EmpresaUpdateValues = z.infer<typeof empresaUpdateSchema>;
 const baseClienteSchemaObject = z.object({
   nombre_completo: z.string().min(2, "El nombre completo es requerido."),
   email: z.string().email("Email inválido.").optional().nullable(),
-  telefono: z.string().optional().nullable(),
+  telefono: z.string().optional().nullable().refine(val => val ? /^[0-9+\-\s()]*$/.test(val) : true, { message: "Teléfono contiene caracteres inválidos."}),
   direccion_predeterminada: z.string().optional().nullable(),
   latitud_predeterminada: z.number().optional().nullable(),
   longitud_predeterminada: z.number().optional().nullable(),
@@ -234,7 +234,7 @@ const baseRepartoSchemaObject = z.object({
 export const repartoCreateSchema = baseRepartoSchemaObject;
 export type RepartoCreateValues = z.infer<typeof repartoCreateSchema>;
 
-export const repartoUpdateSchema = baseRepartoSchemaObject.omit({ envios_ids: true }).partial(); // envios_ids usually not updated directly this way
+export const repartoUpdateSchema = baseRepartoSchemaObject.omit({ envios_ids: true }).partial();
 export type RepartoUpdateValues = z.infer<typeof repartoUpdateSchema>;
 
 
@@ -252,14 +252,13 @@ const baseParadaRepartoSchemaObject = z.object({
   telefono_contacto_parada: z.string().optional().nullable(),
   notas_parada: z.string().optional().nullable(),
   hora_estimada_llegada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
-  estatus_parada: estadoEnvioEnumSchema.default('pendiente_recoleccion'), // Initial status for a stop
+  estatus_parada: estadoEnvioEnumSchema.default('pendiente_recoleccion'),
 });
 export const paradaRepartoCreateSchema = baseParadaRepartoSchemaObject;
 export type ParadaRepartoCreateValues = z.infer<typeof paradaRepartoCreateSchema>;
 
 export const paradaRepartoUpdateSchema = baseParadaRepartoSchemaObject.partial();
 export type ParadaRepartoUpdateValues = z.infer<typeof paradaRepartoUpdateSchema>;
-
 
 // Validators for TarifaDistanciaCalculadora
 const baseTarifaDistanciaCalculadoraSchemaObject = z.object({
@@ -283,7 +282,6 @@ export type TarifaDistanciaCalculadoraCreateValues = z.infer<typeof tarifaDistan
 
 export const tarifaDistanciaCalculadoraUpdateSchema = baseTarifaDistanciaCalculadoraSchemaObject.partial().refine(data => {
   if (data.distancia_min_km !== undefined && data.distancia_max_km !== undefined) {
-    // Ensure they are not null before comparison if they are optional fields
     if (data.distancia_min_km !== null && data.distancia_max_km !== null) {
         return data.distancia_min_km < data.distancia_max_km;
     }
@@ -291,3 +289,27 @@ export const tarifaDistanciaCalculadoraUpdateSchema = baseTarifaDistanciaCalcula
   return true;
 }, { message: "Distancia mínima debe ser menor a la máxima.", path: ["distancia_min_km"] });
 export type TarifaDistanciaCalculadoraUpdateValues = z.infer<typeof tarifaDistanciaCalculadoraUpdateSchema>;
+
+// Validators for Reparto Lote
+export const repartoLoteClienteConfigSchema = z.object({
+  cliente_id: z.string().uuid("ID de cliente inválido."),
+  seleccionado: z.boolean().default(false),
+  tipo_servicio_id: z.string().uuid("ID de tipo de servicio es requerido.").optional().nullable(),
+  descripcion_paquete: z.string().optional().nullable(),
+  cantidad_paquetes: z.coerce.number().int().min(1, "Cantidad debe ser al menos 1.").default(1),
+  costo_envio_manual: z.coerce.number().nonnegative("Costo debe ser no negativo.").optional().nullable(),
+});
+
+export const repartoLoteCreateSchema = z.object({
+  empresa_id: z.string().uuid("Empresa es requerida."),
+  fecha_reparto: z.string().refine(val => !isNaN(Date.parse(val)), { message: "Fecha de reparto inválida" }),
+  repartidor_id: z.string().uuid("Repartidor es requerido."),
+  nombre_reparto: z.string().min(3, "Nombre del reparto debe tener al menos 3 caracteres.").optional().nullable(),
+  hora_inicio_estimada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
+  hora_fin_estimada: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM inválido").optional().nullable(),
+  clientes_config: z.array(repartoLoteClienteConfigSchema)
+    .min(1, "Debe configurar al menos un cliente.")
+    .refine(items => items.some(item => item.seleccionado), { message: "Debe seleccionar al menos un cliente para el reparto."}),
+});
+
+export type RepartoLoteCreateValues = z.infer<typeof repartoLoteCreateSchema>;
