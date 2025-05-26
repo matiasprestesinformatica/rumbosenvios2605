@@ -102,32 +102,32 @@ export function RepartoForm({
         </div>
         <div className="grid md:grid-cols-3 gap-6">
             <FormField
-            control={form.control}
-            name="repartidor_id"
-            render={({ field }) => (
+              control={form.control}
+              name="repartidor_id"
+              render={({ field }) => (
                 <FormItem>
-                <FormLabel className="flex items-center gap-1">
+                  <FormLabel className="flex items-center gap-1">
                     <User className="h-4 w-4 text-muted-foreground" />
                     Repartidor Asignado
-                </FormLabel>
-                <Select
+                  </FormLabel>
+                  <Select
                     onValueChange={field.onChange}
-                    value={field.value || undefined} // Pass undefined if field.value is ''
-                >
+                    value={field.value || undefined} // Crucial change: ensure undefined for empty string to show placeholder
+                  >
                     <FormControl>
-                    <SelectTrigger>
+                      <SelectTrigger>
                         <SelectValue placeholder="Selecciona un repartidor" />
-                    </SelectTrigger>
+                      </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {repartidores.map(r => (
+                      {repartidores.map(r => (
                         <SelectItem key={r.id} value={r.id}>{r.nombre_completo}</SelectItem>
-                    ))}
+                      ))}
                     </SelectContent>
-                </Select>
-                <FormMessage />
+                  </Select>
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
              <FormField
                 control={form.control}
