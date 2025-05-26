@@ -48,7 +48,7 @@ export function RepartoForm({
     resolver: zodResolver(repartoCreateSchema),
     defaultValues: initialData || {
       nombre_reparto: `Reparto ${new Date().toLocaleDateString('es-AR')}`,
-      repartidor_id: '', // Default to empty string
+      repartidor_id: undefined, // Changed from '' to undefined
       fecha_reparto: new Date().toISOString().split('T')[0],
       estatus: 'pendiente_recoleccion',
       envios_ids: [],
@@ -112,7 +112,7 @@ export function RepartoForm({
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    value={field.value || undefined} // Crucial change: ensure undefined for empty string to show placeholder
+                    value={field.value} // Use field.value directly (will be undefined initially)
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -171,7 +171,7 @@ export function RepartoForm({
                 <FormField
                 control={form.control}
                 name="envios_ids"
-                render={() => ( // We directly use controller for updating array value
+                render={() => ( 
                     <FormItem>
                     {enviosPendientes.length === 0 ? (
                         <p className="text-sm text-muted-foreground py-4 text-center">No hay envíos pendientes de recolección.</p>

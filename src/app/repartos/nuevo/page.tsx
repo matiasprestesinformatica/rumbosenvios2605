@@ -51,7 +51,7 @@ export default function NuevoRepartoPage() {
       }
     };
     fetchData();
-  }, [toast]);
+  }, []); // Removed toast from dependency array
 
   const handleCreateReparto = async (values: RepartoFormValues) => {
     setIsLoading(true);
