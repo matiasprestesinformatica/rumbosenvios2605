@@ -22,7 +22,7 @@ import { getClientesForSelectAction } from '@/lib/actions/clientes.actions';
 import { getTiposPaqueteForSelectAction } from '@/lib/actions/tipos-paquete.actions';
 import { getTiposServicioForSelectAction } from '@/lib/actions/tipos-servicio.actions';
 import { suggestDeliveryOptions, type SuggestDeliveryOptionsInput, type SuggestDeliveryOptionsOutput } from '@/ai/flows/suggest-delivery-options';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Added import
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export type EnvioFormValues = z.infer<typeof envioCreateSchema> | z.infer<typeof envioUpdateSchema>;
 
@@ -183,7 +183,13 @@ export function EnvioForm({ initialData, onSubmit, submitButtonText, onSuccess, 
         }
       }
     } catch (error) {
-      toast({ title: "Error de Geocodificación", description: (error as Error).message, variant: "destructive" });
+      const errorMessage = (error as Error).message;
+      const isZeroResults = errorMessage === "No se encontraron resultados para la dirección proporcionada.";
+      toast({
+        title: isZeroResults ? "Dirección no Encontrada" : "Error de Geocodificación",
+        description: errorMessage,
+        variant: isZeroResults ? "default" : "destructive",
+      });
       form.setValue(latField, null as any);
       form.setValue(lngField, null as any);
     } finally {

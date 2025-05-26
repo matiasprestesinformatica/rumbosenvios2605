@@ -78,7 +78,13 @@ export function ClienteForm({ initialData, onSubmit, submitButtonText = "Guardar
         toast({ title: "Geocodificación Exitosa", description: `Dirección verificada: ${result.formattedAddress}`, variant: "success" });
       }
     } catch (error) {
-      toast({ title: "Error de Geocodificación", description: (error as Error).message, variant: "destructive" });
+      const errorMessage = (error as Error).message;
+      const isZeroResults = errorMessage === "No se encontraron resultados para la dirección proporcionada.";
+      toast({
+        title: isZeroResults ? "Dirección no Encontrada" : "Error de Geocodificación",
+        description: errorMessage,
+        variant: isZeroResults ? "default" : "destructive",
+      });
       form.setValue("latitud_predeterminada", null);
       form.setValue("longitud_predeterminada", null);
     } finally {
