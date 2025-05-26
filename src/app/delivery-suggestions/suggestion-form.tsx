@@ -12,16 +12,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { suggestDeliveryRoutes } from '@/ai/flows/suggest-delivery-routes'; // Direct import of the Genkit flow
+import { suggestDeliveryRoutes } from '@/ai/flows/suggest-delivery-routes';
 import type { SuggestDeliveryRoutesInput, SuggestDeliveryRoutesOutput } from '@/ai/flows/suggest-delivery-routes';
 import { Loader2, PlusCircle, Trash2, Route as RouteIcon } from 'lucide-react';
 
-// Server action to wrap the Genkit flow call
 async function suggestDeliveryRoutesAction(input: SuggestDeliveryRoutesInput): Promise<SuggestDeliveryRoutesOutput> {
   try {
-    console.log("Calling suggestDeliveryRoutes with input:", JSON.stringify(input, null, 2));
-    const result = await suggestDeliveryRoutes(input); // Call the Genkit flow directly
-    console.log("suggestDeliveryRoutes result:", JSON.stringify(result, null, 2));
+    // console.log("Calling suggestDeliveryRoutes with input:", JSON.stringify(input, null, 2)); // Dev log, remove for prod
+    const result = await suggestDeliveryRoutes(input);
+    // console.log("suggestDeliveryRoutes result:", JSON.stringify(result, null, 2)); // Dev log, remove for prod
     if (!result || !result.suggestedRoutes || !result.reasoning) {
       return {
         suggestedRoutes: result?.suggestedRoutes || [],
@@ -58,7 +57,7 @@ export default function SuggestionForm() {
       destinations: [""],
       trafficConditions: "Normal",
       weatherConditions: "Soleado",
-      deliveryDeadlines: [new Date().toISOString().substring(0, 16)], // Default to current datetime-local format
+      deliveryDeadlines: [new Date().toISOString().substring(0, 16)],
     },
   });
 
@@ -76,14 +75,14 @@ export default function SuggestionForm() {
     setIsLoading(true);
     setSuggestions(null);
     try {
-      const result = await suggestDeliveryRoutesAction(values); // Use the new action
+      const result = await suggestDeliveryRoutesAction(values);
       setSuggestions(result);
       toast({
         title: "Sugerencias Generadas",
         description: "Se han generado nuevas rutas de entrega.",
+        variant: "success",
       });
     } catch (error) {
-      console.error("Error getting suggestions:", error);
       toast({
         title: "Error al Generar Sugerencias",
         description: (error as Error).message || "Ocurrió un error inesperado.",
@@ -251,3 +250,4 @@ export default function SuggestionForm() {
     </div>
   );
 }
+
