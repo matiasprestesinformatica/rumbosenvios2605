@@ -1,48 +1,61 @@
+
 import type { LucideIcon } from 'lucide-react';
-
-export type Driver = {
-  id: string;
-  name: string;
-  status: 'Available' | 'On Delivery' | 'Offline';
-  vehicle: string;
-  contact: string;
-  currentLocation?: string; 
-  availabilityStart?: string; 
-  availabilityEnd?: string; 
-};
-
-export type Order = {
-  id: string;
-  customerName: string;
-  deliveryAddress: string;
-  status: 'Pending' | 'In-Transit' | 'Delivered' | 'Failed' | 'Cancelled';
-  assignedDriverId?: string;
-  deadline: string; 
-  packageType?: string;
-  timeWindowStart?: string;
-  timeWindowEnd?: string;
-  urgency?: 'high' | 'medium' | 'low';
-};
-
-export type DeliveryMetric = {
-  title: string;
-  value: string | number;
-  icon: LucideIcon;
-  trend?: number; 
-  trendDirection?: 'up' | 'down';
-  previousValue?: string | number;
-};
-
-export type PricedItem = {
-  packageType: 'document' | 'small-parcel' | 'medium-parcel' | 'large-parcel';
-  distance: number; // in km
-  deliverySpeed: 'standard' | 'express' | 'overnight';
-};
 
 export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  keywords?: string; // For potential future search functionality
+  keywords?: string;
   children?: NavItem[];
 };
+
+// Placeholder types - expand as needed for your application
+export type Cliente = {
+  id: string;
+  nombre: string;
+  email?: string;
+  telefono?: string;
+  direccion?: string;
+};
+
+export type Empresa = {
+  id: string;
+  nombre: string;
+  rfc?: string;
+  direccion?: string;
+  contactoNombre?: string;
+  contactoEmail?: string;
+};
+
+export type Repartidor = {
+  id: string;
+  nombre: string;
+  vehiculo?: string;
+  estatus: 'disponible' | 'en_ruta' | 'inactivo';
+  ubicacionActual?: { lat: number; lng: number };
+};
+
+export type Envio = {
+  id: string;
+  clienteId?: string;
+  empresaId?: string;
+  origen: string;
+  destino: string;
+  estatus: 'pendiente' | 'en_transito' | 'entregado' | 'fallido' | 'cancelado';
+  repartidorAsignadoId?: string;
+  fechaCreacion: string;
+  fechaEntregaEstimada?: string;
+  fechaEntregaReal?: string;
+  detallesPaquete?: string;
+};
+
+export type Reparto = { // Could be a "delivery leg" or a collection of envios for one driver run
+  id: string;
+  repartidorId: string;
+  envioIds: string[];
+  fechaAsignacion: string;
+  estatus: 'planificado' | 'en_curso' | 'completado' | 'cancelado';
+  rutaEstimada?: any; // GeoJSON or similar
+};
+
+// You can add more specific types as your application grows.

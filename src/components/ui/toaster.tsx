@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
@@ -8,6 +9,7 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  ToastAction, // Import ToastAction if you plan to use it via useToast hook
 } from "@/components/ui/toast"
 
 export function Toaster() {
@@ -25,7 +27,7 @@ export function Toaster() {
               )}
             </div>
             {action}
-            <ToastClose />
+            {!action && <ToastClose /> /* Show close button only if no action is present */}
           </Toast>
         )
       })}

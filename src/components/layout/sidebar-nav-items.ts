@@ -1,41 +1,55 @@
+
 import type { NavItem } from '@/types';
-import { LayoutDashboard, Users, Package, Route, MapPin, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Users2, Building, Truck, Package, ListChecks, Map, Settings } from 'lucide-react';
 
 export const NAV_ITEMS: NavItem[] = [
   {
     href: '/',
     label: 'Panel de Control',
     icon: LayoutDashboard,
-    keywords: 'dashboard analytics metrics',
+    keywords: 'dashboard inicio metricas',
   },
   {
-    href: '/orders',
-    label: 'Gestión de Pedidos',
+    href: '/clientes',
+    label: 'Clientes',
+    icon: Users2,
+    keywords: 'clientes usuarios personas',
+  },
+  {
+    href: '/empresas',
+    label: 'Empresas',
+    icon: Building,
+    keywords: 'empresas negocios compañias',
+  },
+  {
+    href: '/repartidores',
+    label: 'Repartidores',
+    icon: Truck, // Using Truck for drivers as per previous context. Moped or Bike could be alternatives.
+    keywords: 'repartidores conductores personal entrega',
+  },
+  {
+    href: '/envios',
+    label: 'Envíos', // Could also be Pedidos (Orders)
     icon: Package,
-    keywords: 'orders packages delivery management',
+    keywords: 'envios pedidos paquetes gestion',
   },
   {
-    href: '/drivers',
-    label: 'Gestión de Repartidores',
-    icon: Users,
-    keywords: 'drivers personnel staff management',
+    href: '/repartos',
+    label: 'Repartos', // Specific deliveries or delivery runs
+    icon: ListChecks,
+    keywords: 'repartos entregas logistica',
   },
   {
-    href: '/delivery-suggestions',
-    label: 'Sugerencia de Rutas',
-    icon: Route,
-    keywords: 'ai suggestions routes optimization',
+    href: '/mapa-envios',
+    label: 'Mapa de Envíos',
+    icon: Map,
+    keywords: 'mapa seguimiento tiempo real localizacion',
   },
-  {
-    href: '/tracking',
-    label: 'Seguimiento en Vivo',
-    icon: MapPin,
-    keywords: 'tracking map real-time location',
-  },
-  {
-    href: '/pricing',
-    label: 'Estimación de Precios',
-    icon: DollarSign,
-    keywords: 'pricing calculator estimation',
-  },
+  // Settings is often in a footer or user menu, but can be here too.
+  // {
+  //   href: '/configuracion',
+  //   label: 'Configuración',
+  //   icon: Settings,
+  //   keywords: 'configuracion ajustes cuenta',
+  // },
 ];

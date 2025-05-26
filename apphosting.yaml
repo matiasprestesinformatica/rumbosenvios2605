@@ -1,7 +1,27 @@
+
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
-  maxInstances: 1
+  maxInstances: 2 # Defaulting to 2 for a bit more headroom
+  minInstances: 0 # Allow scaling to zero for cost-saving
+
+# buildConfig:
+  # You can specify a custom build command here if needed
+  #buildCommand: "npm run custom-build"
+
+# env:
+#   - variable: MY_API_KEY
+#     value: "your_api_key_here" # Better to use secrets for sensitive data
+#   - variable: ANOTHER_CONFIG
+#     secret: MY_SECRET_ID # Reference a secret stored in Secret Manager
+#     availability:
+#       - BUILD
+#       - RUNTIME
+# This specifies the node version to use when building and running your app.
+# It has to be a version that is supported by Cloud Functions and Cloud Run:
+# https://cloud.google.com/functions/docs/concepts/nodejs-runtime
+# https://cloud.google.com/run/docs/multiple-versions
+runtime: nodejs20

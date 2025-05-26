@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -30,25 +31,26 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement, // Corrected from HTMLParagraphElement to HTMLDivElement
+  React.HTMLAttributes<HTMLHeadingElement> // Corrected from HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <div
+  <div // Can be h3, h4 etc. or div styled as such. For flexibility using div.
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      "text-2xl font-semibold leading-none tracking-tight", // text-2xl matches previous dashboard
       className
     )}
-    {...props}
+    {...props} // children will be rendered here
   />
 ))
 CardTitle.displayName = "CardTitle"
 
+
 const CardDescription = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLParagraphElement, // Corrected from HTMLDivElement
+  React.HTMLAttributes<HTMLParagraphElement> // Corrected
 >(({ className, ...props }, ref) => (
-  <div
+  <p // Using p for semantic description
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
@@ -77,3 +79,4 @@ const CardFooter = React.forwardRef<
 CardFooter.displayName = "CardFooter"
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+

@@ -1,3 +1,5 @@
+
+"use client";
 import Link from 'next/link';
 import { RumbosEnviosLogo } from '@/components/icons/logo';
 import { NAV_ITEMS } from '@/components/layout/sidebar-nav-items';
@@ -24,25 +26,35 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Bell, Settings, LogOut, Moon, Sun } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import React from 'react';
 
 // This component will be client-side to manage theme toggling
 // For now, we'll keep it simple and not implement actual theme toggling logic
 // to avoid hydration issues without proper setup.
 const ThemeToggle = () => {
-  // Placeholder for theme toggle logic
-  // const [isDark, setIsDark] = React.useState(false);
-  // React.useEffect(() => { setIsDark(document.documentElement.classList.contains('dark')) }, []);
-  // const toggleTheme = () => { document.documentElement.classList.toggle('dark'); setIsDark(!isDark); }
+  const [isDark, setIsDark] = React.useState(false);
+  
+  React.useEffect(() => { 
+    // Ensure this runs only on client
+    setIsDark(document.documentElement.classList.contains('dark'));
+  }, []);
+
+  const toggleTheme = () => { 
+    document.documentElement.classList.toggle('dark'); 
+    setIsDark(prev => !prev); 
+  }
   return (
-    <Button variant="ghost" size="icon" aria-label="Toggle theme">
-      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+    <Button variant="ghost" size="icon" aria-label="Toggle theme" onClick={toggleTheme}>
+      <Sun className={`h-5 w-5 rotate-0 scale-100 transition-all ${isDark ? 'dark:-rotate-90 dark:scale-0' : '' }`} />
+      <Moon className={`absolute h-5 w-5 rotate-90 scale-0 transition-all ${isDark ? 'dark:rotate-0 dark:scale-100' : ''}`} />
     </Button>
   );
 };
 
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   return (
     <div className="flex min-h-screen w-full bg-background">
       <Sidebar variant="sidebar" collapsible="icon" className="border-r">
@@ -50,7 +62,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link href="/" aria-label="Rumbos Envios Home">
             <RumbosEnviosLogo className="h-8 group-data-[collapsible=icon]:hidden" />
           </Link>
-          {/* Collapsed view logo could be a smaller icon if needed */}
         </SidebarHeader>
         <SidebarContent className="flex-1 p-2">
           <SidebarMenu>
@@ -58,7 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href} passHref legacyBehavior>
                   <SidebarMenuButton
-                    // isActive={pathname === item.href} // Requires usePathname, make component client or pass pathname
+                    isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))}
                     tooltip={{ children: item.label, side: 'right' }}
                     className="justify-start"
                   >
@@ -73,10 +84,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SidebarFooter className="p-4 border-t">
           <SidebarMenu>
              <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Settings", side: "right"}} className="justify-start">
-                  <Settings className="h-5 w-5" />
-                  <span>Settings</span>
-                </SidebarMenuButton>
+                <Link href="/configuracion" passHref legacyBehavior>
+                  <SidebarMenuButton tooltip={{children: "Configuración", side: "right"}} className="justify-start" isActive={pathname === "/configuracion"}>
+                    <Settings className="h-5 w-5" />
+                    <span>Configuración</span>
+                  </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
@@ -97,21 +110,23 @@ export function AppShell({ children }: { children: ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
+                    <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar"/>
                     <AvatarFallback>RE</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
+                <DropdownMenuItem asChild>
+                  <Link href="/configuracion">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configuración</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <span>Cerrar Sesión</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

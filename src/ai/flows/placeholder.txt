@@ -1,0 +1,10 @@
+
+Este directorio (src/ai/flows) es donde puedes organizar tus flujos de Genkit.
+Cada flujo debería idealmente estar en su propio archivo .ts.
+
+Por ejemplo:
+- src/ai/flows/sugerir-rutas.ts
+- src/ai/flows/analizar-sentimiento-feedback.ts
+
+Recuerda importar tus flujos en src/ai/dev.ts para que estén disponibles
+cuando ejecutes 'genkit start' para desarrollo local.

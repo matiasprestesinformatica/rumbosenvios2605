@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -74,6 +75,7 @@ const SidebarProvider = React.forwardRef<
     // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
+    
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === "function" ? value(open) : value
@@ -84,16 +86,36 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        if (typeof document !== 'undefined') {
+            document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        }
       },
       [setOpenProp, open]
     )
+    
+    React.useEffect(() => {
+        if (typeof document !== 'undefined') {
+            const cookieValue = document.cookie
+                .split("; ")
+                .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+                ?.split("=")[1];
+            if (cookieValue !== undefined) {
+                const initialOpenState = cookieValue === 'true';
+                 if (setOpenProp) {
+                    setOpenProp(initialOpenState);
+                } else {
+                    _setOpen(initialOpenState);
+                }
+            }
+        }
+    }, [setOpenProp]);
+
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
+        ? setOpenMobile((currentOpen) => !currentOpen)
+        : setOpen((currentOpen) => !currentOpen)
     }, [isMobile, setOpen, setOpenMobile])
 
     // Adds a keyboard shortcut to toggle the sidebar.
@@ -107,9 +129,10 @@ const SidebarProvider = React.forwardRef<
           toggleSidebar()
         }
       }
-
-      window.addEventListener("keydown", handleKeyDown)
-      return () => window.removeEventListener("keydown", handleKeyDown)
+      if (typeof window !== 'undefined') {
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+      }
     }, [toggleSidebar])
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
@@ -761,3 +784,4 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
